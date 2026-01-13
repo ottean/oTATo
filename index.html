@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaTaOs</title>
+    <!-- 引入样式模块 -->
+    <link rel="stylesheet" href="css/phone-frame.css">
+    <link rel="stylesheet" href="css/chat-ui.css">
+    <link rel="stylesheet" href="css/main.css">
+    <!-- 引入 Remix Icon 图标库 -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="app"></div>
+
+    <!-- 
+      使用 ES Module 版本的 Vue CDN。
+      type="module" 允许我们在 js 文件中使用 import/export 
+    -->
+    <script type="importmap">
+        {
+          "imports": {
+            "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+          }
+        }
+    </script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
