@@ -21,12 +21,12 @@
     border-bottom: 1px solid rgba(0,0,0,0.03);
 }
 
-.chat-info h3 { font-size: 17px; font-weight: 600; margin: 0; line-height: 1.2; letter-spacing: -0.3px; }
+.chat-info h3 { font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2; letter-spacing: -0.3px; }
 .chat-info span { font-size: 11px; color: #999; font-weight: 500; }
 
 .chat-abs-list {
-    position: absolute; top: 50px; bottom: 80px; left: 0; right: 0;
-    /* [关键] 强制保留滚动槽，防止内容增加时发生布局跳动 */
+    /* [修改] 底部改为 0，铺满屏幕，消除灰色缝隙 */
+    position: absolute; top: 50px; bottom: 0; left: 0; right: 0;
     overflow-y: scroll;
     scrollbar-gutter: stable;
     -webkit-overflow-scrolling: touch;
@@ -40,24 +40,32 @@
    2. 消息列表 & 气泡 (Message List & Bubbles)
    ========================================= */
 .message-list {
-    padding: 15px;
+    /* [修改] 增加底部内边距 80px，防止最后一条消息被输入框挡住 */
+    padding: 15px 15px 80px 15px;
     display: flex; flex-direction: column; 
-    gap: 15px; 
+    gap: 12px;
     min-height: 100%;
 }
 
-.msg-row-wrapper { display: flex; align-items: flex-end; width: 100%; position: relative; }
+.msg-row-wrapper { 
+    display: flex; 
+    align-items: flex-start; 
+    width: 100%; position: relative; 
+}
 
 .msg-checkbox-col {
     width: 0; opacity: 0; display: flex; align-items: center; justify-content: center;
-    padding-bottom: 10px; overflow: hidden;
+    padding-top: 10px; 
+    overflow: hidden;
     transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     flex-shrink: 0;
 }
 .message-list.multi-select-mode .msg-checkbox-col { width: 30px; opacity: 1; margin-right: 2px; }
 
 .msg-row {
-    display: flex; width: 100%; align-items: flex-end; gap: 8px;
+    display: flex; width: 100%; 
+    align-items: flex-start; 
+    gap: 8px;
     flex: 1; min-width: 0;
 }
 .msg-row.me { justify-content: flex-end; }
@@ -65,18 +73,18 @@
 .msg-row.selecting { pointer-events: none; opacity: 0.8; }
 
 .msg-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 34px; height: 34px;
+    border-radius: 50%;
     background-color: #f0f0f0; background-size: cover; background-position: center;
     box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
-/* [修复] 气泡容器 */
 .msg-col { 
     display: flex; 
     flex-direction: column; 
-    /* 增加宽度到 82% 以补偿滚动条占位，恢复宽敞感 */
-    max-width: 82%; 
+    max-width: 75%; 
     width: fit-content;
     flex-shrink: 0; 
 } 
@@ -84,17 +92,16 @@
 .msg-row.ai .msg-col { align-items: flex-start; }
 
 .bubble {
-    padding: 12px 16px;
-    border-radius: 20px;
-    font-size: 15px;
-    line-height: 1.6; /* 稍微增加行高，让排版更舒服 */
+    padding: 10px 14px; 
+    border-radius: 12px;
+    font-size: var(--chat-font-size, 13px);
+    line-height: 1.5;
     letter-spacing: 0.01em;
     
-    /* [排版优化] */
     word-wrap: break-word; 
-    word-break: break-word; /* 必要时强制断行，防止撑破 */
-    hyphens: auto;          /* 英文自动连字符，减少右侧参差不齐 */
-    text-align: left;       /* 保持左对齐 */
+    word-break: break-word;
+    hyphens: auto;
+    text-align: left;
     
     white-space: pre-wrap;
     position: relative;
@@ -108,22 +115,22 @@
     background: #4a4a4a;
     color: #fff;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border-bottom-right-radius: 4px;
+    border-radius: 12px;
 }
 
 .msg-row.ai .bubble {
     background: #fff;
     color: #333;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     border: 1px solid rgba(0,0,0,0.02);
-    border-bottom-left-radius: 4px;
+    border-radius: 12px;
 }
 
-.bubble img { border-radius: 18px; display: block; }
+.bubble img { border-radius: 10px; display: block; }
 
 .quote-bubble {
     margin-top: 6px; background: rgba(0,0,0,0.04);
-    padding: 8px 12px; border-radius: 12px;
+    padding: 6px 10px; border-radius: 8px;
     font-size: 12px; color: #666; max-width: 100%;
     border-left: 2px solid rgba(0,0,0,0.1);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -141,7 +148,7 @@
    3. 输入区域 (Input Area)
    ========================================= */
 .input-area {
-    padding: 10px 10px 30px 10px; 
+    padding: 8px 10px 25px 10px; 
     background: rgba(255,255,255,0.8);
     backdrop-filter: blur(25px) saturate(180%);
     -webkit-backdrop-filter: blur(25px) saturate(180%);
@@ -152,20 +159,21 @@
 }
 
 .input-area > i {
-    flex-shrink: 0; font-size: 28px; color: #888; cursor: pointer;
+    flex-shrink: 0; font-size: 26px; color: #888; cursor: pointer;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    width: 32px; text-align: center;
+    width: 30px; text-align: center;
 }
 .input-area > i.active { transform: rotate(45deg); color: #333; }
 
 .input-box {
     flex: 1; min-width: 0;
-    padding: 10px 14px;
-    border-radius: 20px;
+    padding: 8px 12px;
+    border-radius: 18px;
     border: 1px solid rgba(0,0,0.1);
     background: #fff;
-    outline: none; font-size: 15px;
-    height: 38px;
+    outline: none; 
+    font-size: 13px; 
+    height: 36px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     transition: all 0.2s;
 }
@@ -178,10 +186,10 @@ input[type=number] { -moz-appearance: textfield; }
 .btn-group { display: flex; gap: 8px; flex-shrink: 0; }
 
 .send-btn {
-    width: 38px; height: 38px;
+    width: 36px; height: 36px;
     border-radius: 50%; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    color: white !important; font-size: 19px;
+    color: white !important; font-size: 18px;
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     flex-shrink: 0;
     border: 1px solid rgba(255,255,255,0.1); 
@@ -190,13 +198,11 @@ input[type=number] { -moz-appearance: textfield; }
 .send-btn:active { transform: scale(0.9); filter: brightness(0.9); }
 .send-btn:disabled { background: #ccc !important; box-shadow: none !important; opacity: 0.6; cursor: not-allowed; }
 
-/* 闪电按钮：深灰渐变 */
 .btn-group .send-btn:first-child { 
     background: linear-gradient(145deg, #444, #222);
     box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
 }
 
-/* 发送箭头按钮：蓝色渐变 */
 .btn-group .send-btn:last-child { 
     background: linear-gradient(145deg, #0088ff, #0066cc);
     box-shadow: 0 4px 12px rgba(0,122,25,0.4); 
@@ -204,7 +210,7 @@ input[type=number] { -moz-appearance: textfield; }
 
 .quote-banner {
     background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
-    padding: 10px 20px; font-size: 12px; color: #666;
+    padding: 8px 15px; font-size: 12px; color: #666;
     display: flex; justify-content: space-between; align-items: center;
     border-top: 1px solid rgba(0,0,0,0.05);
     box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
@@ -225,7 +231,7 @@ input[type=number] { -moz-appearance: textfield; }
     background: #f9f9f9;
     border-radius: 16px;
     color: #444;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
     border: 1px solid rgba(0,0,0,0.05);
     white-space: pre-wrap;
@@ -248,7 +254,9 @@ input[type=number] { -moz-appearance: textfield; }
 
 .styled-range {
     appearance: none; -webkit-appearance: none; width: 100%;
-    background: #e0e0e0; height: 6px; border-radius: 3px;
+    /* 默认背景色，会被 JS 动态样式覆盖 */
+    background: #e0e0e0; 
+    height: 6px; border-radius: 3px;
     margin: 5px 0; cursor: pointer;
 }
 .styled-range:focus { outline: none; }
@@ -393,10 +401,6 @@ input[type=number] { -moz-appearance: textfield; }
 
 .css-preview-box { width: 100%; min-height: 120px; padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.1); margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px; background-color: #f9f9f9; background-size: cover; background-position: center; }
 
-/* =========================================
-   5. 全局滚动条美化 (Scrollbar Optimization)
-   ========================================= */
-
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -408,10 +412,6 @@ input[type=number] { -moz-appearance: textfield; }
 .glass-textarea { padding-right: 8px !important; }
 .glass-textarea::-webkit-scrollbar { width: 6px; }
 .glass-textarea::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, 0.15); border: 2px solid transparent; background-clip: content-box; border-radius: 10px; }
-
-/* =========================================
-   6. 设置页面专用样式 (Settings App)
-   ========================================= */
 
 .settings-window { height: 100%; display: flex; flex-direction: column; background: #f2f4f6; }
 .settings-content { flex: 1; overflow-y: auto; padding: 20px; }
@@ -429,10 +429,6 @@ input[type=number] { -moz-appearance: textfield; }
 .margin-top-15 { margin-top: 15px; }
 .app-version { text-align: center; font-size: 12px; color: #ccc; margin-top: 20px; }
 
-/* =========================================
-   7. 表情包管理器样式 (Sticker Manager)
-   ========================================= */
-
 .sticker-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
     padding-bottom: 80px;
@@ -449,7 +445,6 @@ input[type=number] { -moz-appearance: textfield; }
 
 .sticker-grid-item:active { transform: scale(0.95); }
 
-/* 未启用状态：黑白 + 降低透明度 */
 .sticker-grid-item.inactive {
     background: #f9f9f9;
 }
@@ -529,11 +524,6 @@ input[type=number] { -moz-appearance: textfield; }
 .crumb-item.active { color: #333; }
 .crumb-sep { color: #ccc; }
 
-/* =========================================
-   8. 特殊消息气泡 (Special Bubbles)
-   ========================================= */
-
-/* --- 双语翻译层 (Translation) --- */
 .translation-layer {
     margin-top: 4px; padding-top: 8px;
     border-top: 1px solid rgba(0,0,0,0.08);
@@ -542,51 +532,80 @@ input[type=number] { -moz-appearance: textfield; }
 }
 .msg-row.me .translation-layer { border-top-color: rgba(255,255,255,0.2); }
 
-/* =========================================
-   9. 通用工具类 (Shared Utilities)
-   ========================================= */
-
 .danger-btn {
-    width: 100%; padding: 18px; border-radius: 24px;
-    background: rgba(255, 59, 48, 0.1); color: #ff3b30;
+    width: 100%;             
+    padding: 18px;           
+    border-radius: 24px;     
+    background: rgba(255, 59, 48, 0.1); 
+    color: #ff3b30;
     border: 1px solid rgba(255, 59, 48, 0.2);
-    font-size: 16px; font-weight: 600;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    gap: 6px; transition: all 0.2s; margin-top: 10px;
+    font-size: 16px;         
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;           
+    align-items: center;
+    justify-content: center; 
+    gap: 6px;
+    transition: all 0.2s;
+    margin-top: 10px;
 }
-.danger-btn:active { background: rgba(255, 59, 48, 0.2); transform: scale(0.98); }
+.danger-btn:active {
+    background: rgba(255, 59, 48, 0.2);
+    transform: scale(0.98);
+}
 
 .styled-checkbox {
-    appearance: none; -webkit-appearance: none; width: 20px; height: 20px;
-    border: 2px solid #999; border-radius: 6px; cursor: pointer;
-    position: relative; transition: all 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #999;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
 }
-.styled-checkbox:checked { background-color: #000; border-color: #000; }
+.styled-checkbox:checked {
+    background-color: #000; 
+    border-color: #000;
+}
 .styled-checkbox:checked::after {
-    content: ''; position: absolute; left: 6px; top: 2px;
-    width: 5px; height: 10px; border: solid white;
-    border-width: 0 2px 2px 0; transform: rotate(45deg);
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
-/* 通用居中弹窗 (Center Modal) */
 .center-modal-overlay {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    position: absolute; 
+    top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.4); 
-    z-index: 2000; 
-    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     animation: fadeIn 0.2s;
 }
 
 .center-modal-box {
-    width: 80%; max-width: 300px;
-    background: rgba(255, 255, 0.95);
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    border-radius: 24px; padding: 24px;
+    width: 80%;
+    max-width: 300px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 24px;
+    padding: 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     border: 1px solid rgba(255,255,255,0.6);
-    display: flex; flex-direction: column; gap: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
 }
 
 @keyframes popIn {
@@ -594,6 +613,12 @@ input[type=number] { -moz-appearance: textfield; }
     to { opacity: 1; transform: scale(1); }
 }
 
-/* 全局动画 */
-.slide-down-enter-active, .slide-down-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+.slide-down-enter-active, 
+.slide-down-leave-active { 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+.slide-down-enter-from, 
+.slide-down-leave-to { 
+    opacity: 0; 
+    transform: translateY(-20px) scale(0.95); 
+}

@@ -35,7 +35,6 @@ const App = {
                 
                 <!-- 路由 -->
                 <transition name="fade" mode="out-in">
-                    <!-- [修改] 传递 settings 给 Desktop -->
                     <desktop v-if="currentApp === null" @open-app="openApp" :settings="globalSettings"></desktop>
                     
                     <chat-app v-else-if="currentApp === 'chat'" @close="goHome"></chat-app>
@@ -54,7 +53,7 @@ const App = {
                         <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #ddd; background-size: cover; background-position: center; margin-right: 12px; flex-shrink: 0;" 
                              :style="{ backgroundImage: 'url(' + store.notification.avatar + ')' }"></div>
                         <div style="flex: 1; overflow: hidden;">
-                            <div style="font-weight: 600; font-size: 14px; color: #333;">{{ store.notification.title }}</div>
+                            <div style="font-weight: 600; font-size: 13px; color: #333;">{{ store.notification.title }}</div>
                             <div style="font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ store.notification.content }}</div>
                         </div>
                         <div style="font-size: 11px; color: #999; margin-left: 8px;">刚刚</div>
@@ -73,14 +72,59 @@ const App = {
             showStatusBar: savedSettings.showStatusBar !== false, 
             enableCustomCss: savedSettings.enableCustomCss || false,
             globalCss: savedSettings.globalCss || '',
-            // [新增] 桌面组件开关，默认为 true
             showDesktopTime: savedSettings.showDesktopTime !== false,
-            showDesktopCard: savedSettings.showDesktopCard !== false
+            showDesktopCard: savedSettings.showDesktopCard !== false,
+            desktopWallpaper: savedSettings.desktopWallpaper || '',
+            // 默认字体大小 13px
+            chatFontSize: savedSettings.chatFontSize || 13,
+            customFontData: savedSettings.customFontData || ''
         });
 
         watch(globalSettings, (newVal) => {
             localStorage.setItem('ai_phone_global_settings', JSON.stringify(newVal));
         }, { deep: true });
+
+        // 全局样式注入
+        watch(() => [globalSettings.desktopWallpaper, globalSettings.chatFontSize, globalSettings.customFontData], 
+            ([bg, size, fontData]) => {
+                const root = document.documentElement;
+                
+                // 1. 壁纸
+                if (bg) {
+                    root.style.setProperty('--desktop-bg', `url(${bg})`);
+                } else {
+                    root.style.removeProperty('--desktop-bg');
+                }
+
+                // 2. 字体大小
+                root.style.setProperty('--chat-font-size', `${size}px`);
+
+                // 3. 自定义字体
+                const styleId = 'custom-font-face';
+                let styleTag = document.getElementById(styleId);
+                
+                if (fontData) {
+                    if (!styleTag) {
+                        styleTag = document.createElement('style');
+                        styleTag.id = styleId;
+                        document.head.appendChild(styleTag);
+                    }
+                    styleTag.textContent = `
+                        @font-face {
+                            font-family: 'UserCustomFont';
+                            src: url('${fontData}');
+                            font-display: swap;
+                        }
+                        body, button, input, textarea, .bubble {
+                            font-family: 'UserCustomFont', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+                        }
+                    `;
+                } else if (styleTag) {
+                    styleTag.remove();
+                }
+
+            }, { immediate: true }
+        );
 
         const globalStyleTag = computed(() => {
             if (globalSettings.enableCustomCss && globalSettings.globalCss) {

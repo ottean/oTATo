@@ -47,11 +47,49 @@ export default {
                         </label>
                     </div>
 
-                    <!-- 桌面壁纸设置 -->
+                    <!-- 全局字体设置 -->
+                    <div class="form-group" style="margin-top: 15px;">
+                        <!-- [修改] 更新标签文本，明确显示支持 WOFF2 -->
+                        <label class="mini-label">全局字体 (TTF/WOFF/WOFF2)</label>
+                        
+                        <!-- 切换 Tab -->
+                        <div class="segment-control" style="margin-bottom: 10px;">
+                            <div class="segment-item" :class="{ active: fontMode === 'file' }" @click="fontMode = 'file'">本地上传</div>
+                            <div class="segment-item" :class="{ active: fontMode === 'url' }" @click="fontMode = 'url'">网络链接</div>
+                        </div>
+
+                        <!-- 模式 A: 本地文件 -->
+                        <div v-if="fontMode === 'file'" style="display:flex; gap:10px;">
+                            <button class="api-save-btn" @click="triggerFontUpload" style="margin:0; font-size:13px; padding:10px;">
+                                <i class="ri-folder-upload-line"></i> 选择文件
+                            </button>
+                            <button v-if="localSettings.customFontData" class="danger-btn" @click="clearFont" style="margin:0; width:auto; padding:10px 15px;">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+
+                        <!-- 模式 B: 网络链接 -->
+                        <div v-if="fontMode === 'url'" style="display:flex; gap:10px;">
+                            <input type="text" v-model="fontUrl" class="glass-input-sm" placeholder="https://example.com/font.woff2" style="flex:1; text-align:left;">
+                            <button class="api-save-btn" @click="applyFontUrl" style="margin:0; width:auto; padding:10px; font-size:13px;">
+                                <i class="ri-check-line"></i> 应用
+                            </button>
+                             <button v-if="localSettings.customFontData" class="danger-btn" @click="clearFont" style="margin:0; width:auto; padding:10px 15px;">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                        
+                        <div v-if="localSettings.customFontData" style="font-size:11px; color:#4cd964; margin-top:5px;">
+                            <i class="ri-checkbox-circle-fill"></i> 当前已应用自定义字体
+                        </div>
+
+                        <input type="file" ref="fontInput" accept=".ttf,.woff,.woff2" style="display:none" @change="handleFontChange">
+                    </div>
+
+                    <!-- 桌面壁纸 -->
                     <div class="wallpaper-section">
                         <label class="mini-label">桌面壁纸</label>
                         
-                        <!-- 背景图路径必须动态绑定，其他样式走 CSS -->
                         <div class="bg-uploader wallpaper-uploader" 
                              @click="triggerWallpaper" 
                              :style="{ backgroundImage: localSettings.desktopWallpaper ? 'url(' + localSettings.desktopWallpaper + ')' : 'none' }"
@@ -66,7 +104,6 @@ export default {
                         </div>
                         <input type="file" ref="wallpaperInput" accept="image/*" style="display:none" @change="handleWallpaperChange">
                         
-                        <!-- 移除按钮 (保留 v-if) -->
                         <button v-if="localSettings.desktopWallpaper" 
                             class="danger-btn wallpaper-remove-btn" 
                             @click="localSettings.desktopWallpaper = ''">
@@ -112,7 +149,7 @@ export default {
                 </div>
 
                 <div class="app-version">
-                    TaTaOs v1.0.0 (Build 27)
+                    TaTaOs v1.0.4 (Build 32)
                 </div>
 
             </div>
@@ -122,8 +159,12 @@ export default {
         const localSettings = props.settings;
         const fileInput = ref(null);
         const wallpaperInput = ref(null);
+        
+        // 字体相关
+        const fontInput = ref(null);
+        const fontMode = ref('file'); 
+        const fontUrl = ref('');
 
-        // --- 备份逻辑 ---
         const handleExport = () => {
             const data = {
                 version: 1,
@@ -183,9 +224,7 @@ export default {
             }
         };
 
-        // --- 壁纸逻辑 ---
         const triggerWallpaper = () => { wallpaperInput.value.click(); };
-        
         const handleWallpaperChange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -197,10 +236,44 @@ export default {
             e.target.value = ''; 
         };
 
+        const triggerFontUpload = () => { fontInput.value.click(); };
+        const handleFontChange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!/\.(ttf|woff|woff2)$/i.test(file.name)) {
+                alert('仅支持 .ttf, .woff, .woff2 格式的字体文件');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    localSettings.customFontData = evt.target.result;
+                    alert('字体已加载，请观察界面变化');
+                } catch(err) {
+                    alert('字体文件过大，可能导致存储失败');
+                }
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        };
+
+        const applyFontUrl = () => {
+            if (!fontUrl.value.trim()) return;
+            localSettings.customFontData = fontUrl.value.trim();
+            alert('网络字体已应用');
+        };
+
+        const clearFont = () => {
+            localSettings.customFontData = '';
+            fontUrl.value = '';
+        };
+
         return { 
             localSettings, 
             handleExport, triggerImport, handleImport, fileInput, handleReset,
-            wallpaperInput, triggerWallpaper, handleWallpaperChange 
+            wallpaperInput, triggerWallpaper, handleWallpaperChange,
+            fontInput, triggerFontUpload, handleFontChange,
+            fontMode, fontUrl, applyFontUrl, clearFont
         };
     }
 };

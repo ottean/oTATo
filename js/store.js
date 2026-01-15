@@ -1,28 +1,36 @@
 import { reactive, watch } from 'vue';
 
+// --- 安全存储封装 ---
+const safeStorage = {
+    getItem(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    },
+    setItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {}
+    }
+};
+
 // 1. 初始化数据
-const savedData = localStorage.getItem('ai_phone_sessions');
+const savedData = safeStorage.getItem('ai_phone_sessions');
 const initialSessions = savedData ? JSON.parse(savedData) : [];
 
-// [修复] 使用网络短链接，彻底解决 Base64 导致的语法报错问题
-const defaultStickers = [
-    { 
-        type: 'folder', 
-        id: 'default_cat', 
-        name: '猫猫', 
-        children: [
-            { type: 'image', url: 'https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif', name: 'Cat 1' },
-            { type: 'image', url: 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif', name: 'Cat 2' },
-            { type: 'image', url: 'https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif', name: 'Cat 3' }
-        ]
-    },
-    { type: 'image', url: 'https://media.giphy.com/media/C9x8gX02SnMIoAClTn/giphy.gif', name: 'Cat 4' },
-    { type: 'image', url: 'https://media.giphy.com/media/3o7TKr3nzbh5WgCFxe/giphy.gif', name: 'Cat 5' },
-    { type: 'image', url: 'https://media.giphy.com/media/OPU6wzx8JXHxi/giphy.gif', name: 'Cat 6' }
-];
+const defaultStickers = [];
 
 // 数据迁移逻辑
-let storedStickers = JSON.parse(localStorage.getItem('ai_phone_stickers'));
+let storedStickers = [];
+try {
+    const raw = safeStorage.getItem('ai_phone_stickers');
+    storedStickers = raw ? JSON.parse(raw) : [];
+} catch (e) {
+    storedStickers = [];
+}
+
 if (Array.isArray(storedStickers)) {
     if (storedStickers.length > 0 && !storedStickers[0].type) {
         storedStickers = storedStickers.map(s => ({ type: 'image', ...s }));
@@ -38,6 +46,8 @@ initialSessions.forEach(s => {
     if (s.settings.enableLongText === undefined) s.settings.enableLongText = false;
     if (!s.settings.activeStickerIds) s.settings.activeStickerIds = []; 
     if (s.settings.enableTranslation === undefined) s.settings.enableTranslation = false;
+    
+    if (!s.settings.fontSize) s.settings.fontSize = 13;
 });
 
 // 2. 定义 Store
@@ -51,11 +61,11 @@ export const store = reactive({
 
 // 3. 自动保存
 watch(() => store.sessions, (newVal) => {
-    localStorage.setItem('ai_phone_sessions', JSON.stringify(newVal));
+    safeStorage.setItem('ai_phone_sessions', JSON.stringify(newVal));
 }, { deep: true });
 
 watch(() => store.stickers, (newVal) => {
-    localStorage.setItem('ai_phone_stickers', JSON.stringify(newVal));
+    safeStorage.setItem('ai_phone_stickers', JSON.stringify(newVal));
 }, { deep: true });
 
 // --- 头像生成器 ---
@@ -112,6 +122,7 @@ const parseMessageContent = (rawText, session) => {
     let originalContent = ''; 
     let stickerUrl = null; 
     let translation = null;
+    let fakePhotoContent = null; 
     
     let msgType = 'text';
 
@@ -121,19 +132,32 @@ const parseMessageContent = (rawText, session) => {
         content = "对方撤回了一条消息"; 
     }
 
-    // [修复] 解析翻译：支持中文冒号，忽略大小写
     const transMatch = content.match(/(\n\s*)?\[TRANSLATION\][:：]?\s*([\s\S]*)$/i);
     if (transMatch) {
         translation = transMatch[2].trim();
-        // [关键修复] 移除翻译部分后，必须 trim() 去除正文末尾残留的换行符
-        // 否则气泡底部会出现巨大的空白
         content = content.replace(transMatch[0], '').trim();
+    }
+
+    const photoMatch = content.match(/\[PHOTO\s*:\s*(.*?)\]/i);
+    if (photoMatch) {
+        fakePhotoContent = photoMatch[1].trim();
+        stickerUrl = 'https://i.postimg.cc/MHKmwm1N/tu-pian-yi-bei-xiao-mao-chi-diao.jpg';
+        content = content.replace(photoMatch[0], '').trim();
+        msgType = 'image'; 
     }
 
     const stickerMatch = content.match(/\[STICKER\s*:\s*(.*?)\]/);
     if (stickerMatch) {
-        stickerUrl = stickerMatch[1].trim();
-        content = content.replace(stickerMatch[0], '').trim();
+        const potentialUrl = stickerMatch[1].trim();
+        const isActive = (session.settings.activeStickerIds || []).includes(potentialUrl);
+        
+        if (isActive) {
+            stickerUrl = potentialUrl;
+            content = content.replace(stickerMatch[0], '').trim();
+            if (!content) msgType = 'image'; 
+        } else {
+            content = content.replace(stickerMatch[0], '').trim();
+        }
     }
 
     const statusMatch = content.match(/\[STATUS:(.*?)\]/);
@@ -163,7 +187,6 @@ const parseMessageContent = (rawText, session) => {
 
     if (!isRecall && msgType === 'text') content = content.trim();
 
-    // [兜底] 如果正文为空但有翻译，说明 AI 格式错乱，直接把翻译当正文
     if (!content && translation) {
         content = translation;
         translation = null; 
@@ -171,30 +194,37 @@ const parseMessageContent = (rawText, session) => {
 
     if (!content && quote) quote = null; 
 
-    return { content, os, quote, isRecall, originalContent, stickerUrl, msgType, translation };
+    return { content, os, quote, isRecall, originalContent, stickerUrl, msgType, translation, fakePhotoContent };
 };
 
 // --- 更新消息 ---
 const updateMessage = (session, index, parsed) => {
+    // 确保消息对象存在，如果不存在则创建
     if (!session.messages[index]) {
         session.messages[index] = { role: 'assistant', content: '' };
     }
     const msg = session.messages[index];
+    
     if (parsed.isRecall) {
         msg.role = 'system';
         msg.content = '对方撤回了一条消息';
         msg.isRecall = true;
         msg.originalContent = parsed.originalContent;
-        delete msg.quote; delete msg.os; delete msg.image; delete msg.translation;
+        delete msg.quote; delete msg.os; delete msg.image; delete msg.translation; delete msg.fakePhotoContent;
     } else {
         msg.type = parsed.msgType; 
         msg.content = parsed.content;
+        
         if (parsed.stickerUrl) msg.image = parsed.stickerUrl;
+        else if (msg.type !== 'image') delete msg.image;
+
+        if (parsed.fakePhotoContent) msg.fakePhotoContent = parsed.fakePhotoContent;
         
         if (parsed.translation) msg.translation = parsed.translation;
         if (msg.showTranslation === undefined) msg.showTranslation = false;
         
-        msg.os = parsed.os;
+        if (parsed.os) msg.os = parsed.os;
+        
         if (parsed.quote) msg.quote = parsed.quote;
         else delete msg.quote;
     }
@@ -203,7 +233,24 @@ const updateMessage = (session, index, parsed) => {
 const buildSystemPrompt = (session) => {
     let prompt = "【重要指令】你正在进行角色扮演。请严格遵守人设。严禁跳出角色。\n\n";
     
-    const allWorldbooks = JSON.parse(localStorage.getItem('ai_phone_worldbooks_v2') || '[]');
+    prompt += "【强制要求】\n";
+    prompt += "1. **每一条回复**都必须包含【心声】，用来描写你的心理活动或潜台词。\n";
+    prompt += "2. 心声必须放在回复的最开头，用【】包裹。\n";
+    prompt += "3. 格式示例：【他居然这么说...】是的，没错。\n\n";
+
+    if (!session.settings.enableLongText) {
+        prompt += "【排版约束 - 气泡分割】\n";
+        prompt += "1. 严禁发送一大段长文字。\n";
+        prompt += "2. **必须**使用双换行符 `\\n\\n` 来分割不同的句子或观点。\n";
+        prompt += "3. 每一个 `\\n\\n` 将会被前端识别为气泡的分割点，请利用这一点来模拟多条消息连发的效果。\n";
+    }
+
+    let allWorldbooks = [];
+    try {
+        const wbRaw = safeStorage.getItem('ai_phone_worldbooks_v2');
+        allWorldbooks = wbRaw ? JSON.parse(wbRaw) : [];
+    } catch(e) { allWorldbooks = []; }
+
     const activeWbIds = session.settings.activeWorldbooks || [];
     const activeBooks = allWorldbooks.filter(wb => wb.type === 'book' && activeWbIds.includes(wb.id));
     
@@ -222,7 +269,9 @@ const buildSystemPrompt = (session) => {
     if (activeStickerIds.length > 0) {
         const activeStickers = getActiveStickers(store.stickers, activeStickerIds);
         if (activeStickers.length > 0) {
-            prompt += "【可用表情包】\n发送格式: `[STICKER: 链接]`\n";
+            prompt += "【可用表情包】\n";
+            prompt += "严禁编造链接。只能使用以下列表中的链接发送图片。\n";
+            prompt += "发送格式: `[STICKER: 链接]`\n";
             activeStickers.forEach(s => {
                 prompt += `- ${s.name}: ${s.url}\n`;
             });
@@ -230,17 +279,20 @@ const buildSystemPrompt = (session) => {
         }
     }
 
+    prompt += "【发送照片】\n";
+    prompt += "如果你想发送一张自拍、风景照或物品照片，请使用格式：`[PHOTO: 照片内容的详细描述]`。\n";
+    prompt += "例如：`[PHOTO: 一只正在晒太阳的橘猫]`。\n";
+    prompt += "系统会自动将其转换为一张照片卡片。\n\n";
+
     prompt += "\n【交互模式指令】\n";
     if (session.settings.enableLongText) {
         prompt += "1. 当前为【长文/小说模式】，输出完整长段落。\n";
         if (session.settings.novelStyle) prompt += `2. 风格: ${session.settings.novelStyle}\n`;
     } else {
         prompt += "1. 当前为【即时聊天模式】，请模拟即时通讯软件。\n";
-        // [新增] 明确禁止双引号
         prompt += "2. **Output pure text only.** Do NOT wrap your entire response in quotation marks.\n";
     }
     
-    // [更新] 双语 Prompt
     if (session.settings.enableTranslation) {
         prompt += "\n<DialogueRule>\n";
         prompt += "- All **spoken dialogues by {{char}}** must be written in Cantonese colloquial Chinese, with occasional Standard Chinese and English mixed in.\n";
@@ -261,11 +313,15 @@ const buildSystemPrompt = (session) => {
 };
 
 // --- Actions ---
-export const createSession = (newSession) => { store.sessions.unshift(newSession); };
+export const createSession = (newSession) => { 
+    if (!newSession.settings) newSession.settings = {};
+    if (!newSession.settings.fontSize) newSession.settings.fontSize = 13;
+    store.sessions.unshift(newSession); 
+};
 export const deleteSession = (id) => { const idx = store.sessions.findIndex(s => s.id === id); if (idx !== -1) store.sessions.splice(idx, 1); };
 export const updateSession = (updatedSession) => { const idx = store.sessions.findIndex(s => s.id === updatedSession.id); if (idx !== -1) store.sessions[idx] = { ...updatedSession }; };
 
-export const sendUserMessage = ({ sessionId, text, quote, image, type = 'text' }) => {
+export const sendUserMessage = ({ sessionId, text, quote, image, type = 'text', fakePhotoContent = null }) => {
     const session = store.sessions.find(s => s.id === sessionId);
     if (!session) return;
     
@@ -275,24 +331,30 @@ export const sendUserMessage = ({ sessionId, text, quote, image, type = 'text' }
         content: text || '', 
         quote, 
         image: image || null,
+        fakePhotoContent: fakePhotoContent, 
         showTranslation: false
     };
 
     session.messages.push(newMsg);
-    session.lastMessage = newMsg.content;
+    session.lastMessage = newMsg.content || '[图片]';
     session.lastTime = Date.now();
 };
 
-export const generateAiMessage = async ({ sessionId, text, quote, image, type = 'text' }) => {
+export const generateAiMessage = async ({ sessionId, text, quote, image, type = 'text', fakePhotoContent = null }) => {
     const session = store.sessions.find(s => s.id === sessionId);
     if (!session) return;
 
     if (text || image) {
-        sendUserMessage({ sessionId, text, quote, image, type });
+        sendUserMessage({ sessionId, text, quote, image, type, fakePhotoContent });
     }
 
-    const profiles = JSON.parse(localStorage.getItem('ai_phone_profiles') || '[]');
-    const activeId = localStorage.getItem('ai_phone_active_id');
+    let profiles = [];
+    try {
+        const raw = safeStorage.getItem('ai_phone_profiles');
+        profiles = raw ? JSON.parse(raw) : [];
+    } catch(e) { profiles = []; }
+
+    const activeId = safeStorage.getItem('ai_phone_active_id');
     const config = profiles.find(p => p.id == activeId);
 
     if (!config || !config.apiKey) { 
@@ -305,27 +367,33 @@ export const generateAiMessage = async ({ sessionId, text, quote, image, type = 
     }
 
     session.isGenerating = true; 
-    const startIndex = session.messages.length;
-    session.messages.push({ role: 'assistant', content: '', os: '' });
+    
+    // [重大修改] 不再预先创建气泡 (push)，而是记录当前应该插入的索引
+    // 这样如果生成失败或者内容为空，就不会有任何气泡产生
+    let currentMsgIndex = session.messages.length; 
+    // 不需要 push 空消息了
 
     try {
         const history = session.messages.slice(-20, -1).map(m => {
             let content = m.content;
+            if (m.fakePhotoContent) {
+                content = `(发送了一张照片，内容是：${m.fakePhotoContent})`;
+            }
             if (m.role === 'user' && m.quote) content = `(引用: "${m.quote.content}")\n${content}`;
-            if (m.image) {
+            
+            if (!m.fakePhotoContent && m.image && (m.image.startsWith('http') || m.image.startsWith('data:image'))) {
                 return {
                     role: m.role,
                     content: [{ type: "text", text: content || "（发送了一张图片）" }, { type: "image_url", image_url: { url: m.image } }]
                 };
             } else {
-                return { role: m.role, content: content };
+                return { role: m.role, content: content || '(空)' };
             }
         });
 
         const messagesPayload = [{ role: 'system', content: buildSystemPrompt(session) }, ...history];
         let baseUrl = config.baseUrl.replace(/\/$/, '');
 
-        // [修复] 强制流式开关：如果 config.stream 未定义或为 false，则关闭流式
         const isStream = config.stream === true; 
 
         const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -346,17 +414,14 @@ export const generateAiMessage = async ({ sessionId, text, quote, image, type = 
         }
         
         if (isStream) {
-            // --- 流式处理逻辑 ---
             const reader = response.body.getReader();
             const decoder = new TextDecoder('utf-8');
-            let fullStreamText = '';
-            let rawBuffer = ''; 
+            let buffer = ''; 
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 const chunk = decoder.decode(value, { stream: true });
-                rawBuffer += chunk;
                 const lines = chunk.split('\n');
                 
                 for (const line of lines) {
@@ -366,41 +431,78 @@ export const generateAiMessage = async ({ sessionId, text, quote, image, type = 
                         try {
                             const json = JSON.parse(jsonStr);
                             const content = json.choices[0].delta.content || '';
-                            fullStreamText += content;
-                            
-                            const parsed = parseMessageContent(fullStreamText, session);
-                            updateMessage(session, startIndex, parsed);
+                            buffer += content;
+
+                            let splitIndex = buffer.indexOf('\n\n');
+                            while (splitIndex !== -1) {
+                                const bubbleText = buffer.slice(0, splitIndex).trim();
+                                buffer = buffer.slice(splitIndex + 2); 
+
+                                if (bubbleText) {
+                                    // 只有当有内容要写入时，才检查气泡是否存在
+                                    // 如果当前索引还没气泡，就创建一个
+                                    if (!session.messages[currentMsgIndex]) {
+                                        session.messages.push({ role: 'assistant', content: '', os: '' });
+                                    }
+                                    
+                                    const parsed = parseMessageContent(bubbleText, session);
+                                    updateMessage(session, currentMsgIndex, parsed);
+                                    
+                                    // 准备下一个气泡位置
+                                    currentMsgIndex++;
+                                }
+                                splitIndex = buffer.indexOf('\n\n');
+                            }
+
+                            // 实时预览剩余 buffer
+                            if (buffer.trim()) {
+                                if (!session.messages[currentMsgIndex]) {
+                                    session.messages.push({ role: 'assistant', content: '', os: '' });
+                                }
+                                const parsed = parseMessageContent(buffer, session);
+                                updateMessage(session, currentMsgIndex, parsed);
+                            }
+
                         } catch (e) {}
                     }
                 }
             }
             
-            // [兜底修复] 如果开启了流式，但没有解析到任何 SSE 数据
-            if (!fullStreamText.trim() && rawBuffer.trim().startsWith('{')) {
-                try {
-                    const data = JSON.parse(rawBuffer);
-                    const content = data.choices[0].message.content || '';
-                    fullStreamText = content;
-                    const parsed = parseMessageContent(fullStreamText, session);
-                    updateMessage(session, startIndex, parsed);
-                } catch(e) {}
-            } else {
-                const parsed = parseMessageContent(fullStreamText, session);
-                updateMessage(session, startIndex, parsed);
+            // 循环结束
+            if (buffer.trim()) {
+                if (!session.messages[currentMsgIndex]) {
+                    session.messages.push({ role: 'assistant', content: '', os: '' });
+                }
+                const parsed = parseMessageContent(buffer, session);
+                updateMessage(session, currentMsgIndex, parsed);
             }
 
         } else {
-            // --- 非流式处理逻辑 ---
+            // 非流式
             const data = await response.json();
             const fullText = data.choices[0].message.content || '';
-            const parsed = parseMessageContent(fullText, session);
-            updateMessage(session, startIndex, parsed);
+            const parts = fullText.split('\n\n');
+            
+            parts.forEach((part, idx) => {
+                if (!part.trim()) return; // 忽略空段落
+                
+                // 确保气泡存在
+                if (!session.messages[currentMsgIndex]) {
+                    session.messages.push({ role: 'assistant', content: '' });
+                }
+                
+                const parsed = parseMessageContent(part, session);
+                updateMessage(session, currentMsgIndex, parsed);
+                currentMsgIndex++;
+            });
         }
 
         const lastMsg = session.messages[session.messages.length - 1];
-        session.lastMessage = lastMsg.role === 'system' ? '[撤回消息]' : (lastMsg.content || '(无内容)');
+        if (lastMsg) {
+            session.lastMessage = lastMsg.role === 'system' ? '[撤回消息]' : (lastMsg.content || '(无内容)');
+        }
         
-        if (store.currentViewingSessionId !== sessionId) {
+        if (store.currentViewingSessionId !== sessionId && lastMsg) {
             store.notification.title = session.name;
             store.notification.content = session.lastMessage;
             store.notification.avatar = session.avatar || generateAvatar(session.name, 'assistant');
@@ -411,9 +513,25 @@ export const generateAiMessage = async ({ sessionId, text, quote, image, type = 
 
     } catch (e) {
         const errorText = `[连接失败] ${e.message}`;
-        session.messages[startIndex].content = errorText;
+        // 出错时才创建错误气泡
+        if (!session.messages[currentMsgIndex]) {
+             session.messages.push({ role: 'assistant', content: errorText });
+        } else {
+             session.messages[currentMsgIndex].content = errorText;
+        }
         session.lastMessage = errorText;
     } finally {
+        // [最后一道防线] 清理可能残留的空消息
+        session.messages = session.messages.filter(m => {
+            if (m.role === 'assistant') {
+                const hasContent = m.content && m.content.trim();
+                const hasImage = !!m.image;
+                const hasOs = m.os && m.os.trim();
+                if (!hasContent && !hasImage && !hasOs) return false;
+            }
+            return true;
+        });
+        
         session.isGenerating = false;
     }
 };

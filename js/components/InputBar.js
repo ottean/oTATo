@@ -30,19 +30,14 @@ export default {
                         <div class="plus-icon"><i class="ri-emotion-line"></i></div>
                         <span class="plus-label">表情</span>
                     </div>
-                    
-                    <!-- [恢复] 转账 (占位) -->
                     <div class="plus-item" @click="showLocalToast('转账功能开发中')">
                         <div class="plus-icon"><i class="ri-money-cny-box-line"></i></div>
                         <span class="plus-label">转账</span>
                     </div>
-
-                    <!-- [恢复] 语音 (占位) -->
                     <div class="plus-item" @click="showLocalToast('语音功能开发中')">
                         <div class="plus-icon"><i class="ri-mic-line"></i></div>
                         <span class="plus-label">语音</span>
                     </div>
-                    
                     <div class="plus-item" @click="showLocalToast('位置功能开发中')">
                         <div class="plus-icon"><i class="ri-map-pin-line"></i></div>
                         <span class="plus-label">位置</span>
@@ -60,7 +55,7 @@ export default {
                     </div>
                     <div class="sticker-content">
                         <div class="sticker-item" v-for="(s, idx) in currentStickers" :key="idx" @click="handleSticker(s.url)">
-                            <img :src="s.url" class="sticker-img" loading="lazy">
+                            <img :src="s.url" class="sticker-img" loading="lazy" @error="handleImgError">
                         </div>
                         <div v-if="currentStickers.length === 0" style="grid-column: 1 / -1; text-align: center; color: #999; font-size: 12px; padding: 20px;">此处暂无表情</div>
                     </div>
@@ -72,11 +67,10 @@ export default {
                 
                 <div class="btn-group">
                     <button class="send-btn" @click="handleGenerate" :disabled="disabled"><i class="ri-flashlight-fill"></i></button>
-                    <button class="send-btn" @click="handleSendOnly" :disabled="!text.trim()"><i class="ri-arrow-up-line"></i></button>
+                    <button class="send-btn" @click="handleSendOnly" :disabled="text.length === 0"><i class="ri-arrow-up-line"></i></button>
                 </div>
             </div>
 
-            <!-- Toast 和 Input 仍然保留在这里 -->
             <transition name="fade">
                 <div v-if="toastMsg" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 100; pointer-events: none; white-space: nowrap;">
                     {{ toastMsg }}
@@ -108,18 +102,19 @@ export default {
         const setQuote = (quoteData) => { currentQuote.value = quoteData; };
 
         const handleSendOnly = () => {
-            if (!text.value.trim()) return;
-            emit('send', { text: text.value.trim(), quote: currentQuote.value, type: 'text' });
+            if (text.value.length === 0) return;
+            emit('send', { text: text.value, quote: currentQuote.value, type: 'text' });
             text.value = ''; currentQuote.value = null; closeAllMenus();
         };
 
         const handleGenerate = () => {
-            emit('generate', { text: text.value.trim(), quote: currentQuote.value, type: 'text' });
+            emit('generate', { text: text.value, quote: currentQuote.value, type: 'text' });
             text.value = ''; currentQuote.value = null; closeAllMenus();
         };
         
         const handleSticker = (url) => {
-            emit('generate', { text: '', quote: currentQuote.value, image: url, type: 'image' });
+            // [确认] 仅发送，不触发 AI
+            emit('send', { text: '', quote: currentQuote.value, image: url, type: 'image' });
             closeAllMenus();
         };
 
@@ -137,14 +132,58 @@ export default {
 
         const triggerImageUpload = () => { imgInput.value.click(); };
         
+        // [修复] 1. 强制转码为 JPEG 以修复 RIFF 报错
+        // [修复] 2. 限制最大分辨率，防止过大
+        // [修复] 3. 改为 emit('send')，禁止自动回复
         const handleFileSelect = (event) => {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                const base64 = e.target.result;
-                emit('generate', { text: text.value.trim(), quote: currentQuote.value, image: base64, type: 'image' });
-                text.value = ''; currentQuote.value = null; closeAllMenus();
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // 限制最大边长 1024
+                    const maxDim = 1024;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = (height / width) * maxDim;
+                            width = maxDim;
+                        } else {
+                            width = (width / height) * maxDim;
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 填充白色背景，解决 PNG 透明变黑问题
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 强制转换为 JPEG，质量 0.8
+                    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // 关键修复：改为 emit('send')
+                    emit('send', { 
+                        text: text.value, 
+                        quote: currentQuote.value, 
+                        image: jpegBase64, 
+                        type: 'image' 
+                    });
+                    
+                    text.value = ''; 
+                    currentQuote.value = null; 
+                    closeAllMenus();
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
             event.target.value = ''; 
@@ -152,9 +191,8 @@ export default {
 
         const triggerFakePhoto = () => { closeAllMenus(); emit('open-photo-dialog'); };
 
-        const emitOpen = (event) => {
-            closeAllMenus();
-            emit(event);
+        const handleImgError = (e) => {
+            e.target.style.display = 'none';
         };
 
         expose({ setQuote, closeMenu });
@@ -164,7 +202,7 @@ export default {
             currentQuote, toggleMenu, toggleEmojiPanel, handleSticker, closeAllMenus, showLocalToast, toastMsg,
             imgInput, triggerImageUpload, handleFileSelect, triggerFakePhoto,
             currentTab, folders, currentStickers,
-            emitOpen
+            handleImgError
         };
     }
 };

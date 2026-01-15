@@ -182,7 +182,21 @@ export default {
     `,
     setup(props, { emit }) {
         const isSettingOpen = ref(false);
-        const containerStyle = ref({ background: '#f2f4f6', backgroundSize: 'cover', backgroundPosition: 'center' });
+        const containerStyle = computed(() => {
+            const style = { 
+                background: '#f2f4f6', 
+                backgroundSize: 'cover', 
+                backgroundPosition: 'center',
+                backgroundImage: props.session.settings.background ? `url(${props.session.settings.background})` : 'none'
+            };
+            
+            // [修复] 强制兜底：如果设置里没有 fontSize，默认使用 13px
+            const size = props.session.settings.fontSize || 13;
+            style['--chat-font-size'] = size + 'px';
+            
+            return style;
+        });
+
         const showOs = ref(false);
         const contextMenu = reactive({ visible: false, x: 0, y: 0, index: -1, role: '' });
         const isMultiSelect = ref(false);
@@ -217,11 +231,14 @@ export default {
             nextTick(scrollToBottom); 
         }, { immediate: true });
         
-        watch(() => props.session.settings.background, (newBg) => {
-             containerStyle.value.backgroundImage = newBg ? `url(${newBg})` : 'none';
-        }, { immediate: true });
-
         watch(() => props.session.messages.length, () => { nextTick(scrollToBottom); });
+
+        // [修复] 监听设置页面关闭，强制滚动到底部，解决返回顶部 bug
+        watch(isSettingOpen, (val) => {
+            if (!val) {
+                nextTick(scrollToBottom);
+            }
+        });
 
         const displayName = computed(() => props.session.isGenerating ? '对方正在输入...' : props.session.name);
         const displayStatus = computed(() => props.session.status || '在线');
@@ -269,7 +286,19 @@ export default {
             setTimeout(() => { toastMsg.value = ''; }, 2000);
         };
 
-        const confirmFakePhoto = () => { if (tempPhotoDesc.value.trim()) { const fakePhotoText = `(发送了一张照片: ${tempPhotoDesc.value})`; emit('trigger-generate', { sessionId: props.session.id, text: fakePhotoText }); } tempPhotoDesc.value = ''; showPhotoDialog.value = false; };
+        const confirmFakePhoto = () => { 
+            if (tempPhotoDesc.value.trim()) { 
+                const photoPlaceholder = 'https://i.postimg.cc/MHKmwm1N/tu-pian-yi-bei-xiao-mao-chi-diao.jpg';
+                emit('trigger-send', { 
+                    sessionId: props.session.id, 
+                    image: photoPlaceholder, 
+                    type: 'image',
+                    fakePhotoContent: tempPhotoDesc.value
+                }); 
+            } 
+            tempPhotoDesc.value = ''; 
+            showPhotoDialog.value = false; 
+        };
 
         const handleSendOnly = (payload) => { 
             emit('trigger-send', { sessionId: props.session.id, ...payload }); 

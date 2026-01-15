@@ -46,8 +46,15 @@ export default {
                             <div v-if="msg.role !== 'user'" class="msg-avatar ai-avatar" :style="{ backgroundImage: 'url(' + (aiAvatar || defaultAi) + ')' }"></div>
 
                             <div class="msg-col">
-                                <div v-if="msg.image" class="bubble" style="padding: 0; overflow: hidden; background: transparent; border: none;">
+                                <!-- [修改] 图片渲染逻辑：支持点击切换显示隐藏文字 -->
+                                <div v-if="msg.image" class="bubble" style="padding: 0; overflow: hidden; background: transparent; border: none; position: relative;" @click="toggleFakePhoto(msg)">
                                     <img :src="msg.image" style="max-width: 200px; max-height: 200px; border-radius: 16px; display: block;" />
+                                    
+                                    <!-- 隐藏文字遮罩 -->
+                                    <div v-if="msg.fakePhotoContent && msg.showFakeContent" 
+                                         style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 15px; color: #fff; font-size: 13px; text-align: center; border-radius: 16px;">
+                                        {{ msg.fakePhotoContent }}
+                                    </div>
                                 </div>
 
                                 <div v-else-if="msg.content" class="bubble" @click="toggleTranslation(index)">
@@ -112,9 +119,16 @@ export default {
             }
         };
 
+        // [新增] 切换显示“文字照片”的逻辑
+        const toggleFakePhoto = (msg) => {
+            if (msg.fakePhotoContent) {
+                msg.showFakeContent = !msg.showFakeContent;
+            }
+        };
+
         return { 
             listRef, defaultAi, defaultUser, startPress, endPress, handleRightClick, shouldShowMessage, handleWrapperClick,
-            toggleTranslation
+            toggleTranslation, toggleFakePhoto
         };
     }
 };
