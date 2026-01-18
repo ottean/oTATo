@@ -2,12 +2,30 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TaTaOs</title>
-    <!-- [新增] 网页图标 -->
+    <!-- [修改] 增加 viewport-fit=cover 适配全面屏 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TaTaOS</title>
+
+    <!-- ================= PWA 核心增强 ================= -->
+    <!-- 1. 链接身份证 -->
+    <link rel="manifest" href="manifest.json" />
+    
+    <!-- 2. iOS 全屏支持 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TaTaOS" />
+
+    <!-- 3. Android 全屏支持 -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#e0e5ec" />
+
+    <!-- 4. 多尺寸图标适配 -->
     <link rel="icon" href="https://i.postimg.cc/GtWHgzvk/tataos.png" type="image/png">
-    <!-- [新增] 添加到主屏幕图标 (iOS/Android) -->
     <link rel="apple-touch-icon" href="https://i.postimg.cc/GtWHgzvk/tataos.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://i.postimg.cc/GtWHgzvk/tataos.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://i.postimg.cc/GtWHgzvk/tataos.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="https://i.postimg.cc/GtWHgzvk/tataos.png" />
+    <!-- =============================================== -->
     
     <!-- 引入样式模块 -->
     <link rel="stylesheet" href="css/phone-frame.css">
