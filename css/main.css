@@ -17,7 +17,33 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-body{background-color:var(--bg-color);display:flex;justify-content:center;align-items:center;height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text-main);font-size:13px;}
+body {
+    /* 保持使用变量，这样如果你以后改了 --bg-color，背景会自动变 */
+    background-color: var(--bg-color); 
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* 兼容旧设备 */
+    height: 100vh;
+    /* [核心] 针对移动端的动态高度，防止底部工具栏干扰 */
+    height: 100dvh; 
+    
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-main);
+    font-size: 13px;
+    
+    /* [核心新增] 锁死 Body，强制背景色填满所有缝隙 */
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* 禁止整个网页滚动，只让内部元素滚动 */
+    position: fixed;  /* 钉死在屏幕上 */
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
 .glass-panel{background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);}
 
 .desktop {
