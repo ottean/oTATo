@@ -2,7 +2,9 @@
     "name": "TaTaOS AI Phone",
     "short_name": "TaTaOS",
     "start_url": "./index.html",
-    "display": "standalone",
+    
+    "display": "fullscreen", 
+    
     "background_color": "#e0e5ec",
     "theme_color": "#e0e5ec",
     "orientation": "portrait",
