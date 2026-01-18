@@ -6,42 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TaTaOS</title>
 
-    <!-- ================= PWA 核心增强 ================= -->
-    <!-- 1. 链接身份证 -->
+    <!-- ================= PWA 核心设置 ================= -->
     <link rel="manifest" href="manifest.json" />
     
-    <!-- 2. iOS 全屏支持 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TaTaOS" />
-
-    <!-- 3. Android 全屏支持 -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#e0e5ec" />
 
-    <!-- 4. 多尺寸图标适配 -->
-    <link rel="icon" href="https://i.postimg.cc/GtWHgzvk/tataos.png" type="image/png">
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/GtWHgzvk/tataos.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://i.postimg.cc/GtWHgzvk/tataos.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="https://i.postimg.cc/GtWHgzvk/tataos.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="https://i.postimg.cc/GtWHgzvk/tataos.png" />
-    <!-- =============================================== -->
+    <!-- [修改] 全套图标替换为新链接 -->
+    <link rel="icon" href="https://i.postimg.cc/SR87mD1P/Ta-Ta.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/SR87mD1P/Ta-Ta.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://i.postimg.cc/SR87mD1P/Ta-Ta.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://i.postimg.cc/SR87mD1P/Ta-Ta.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="https://i.postimg.cc/SR87mD1P/Ta-Ta.png" />
     
     <!-- 引入样式模块 -->
     <link rel="stylesheet" href="css/phone-frame.css">
     <link rel="stylesheet" href="css/chat-ui.css">
     <link rel="stylesheet" href="css/main.css">
-    <!-- 引入 Remix Icon 图标库 -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 </head>
 <body>
 
     <div id="app"></div>
 
-    <!-- 
-      使用 ES Module 版本的 Vue CDN。
-      type="module" 允许我们在 js 文件中使用 import/export 
-    -->
     <script type="importmap">
         {
           "imports": {
