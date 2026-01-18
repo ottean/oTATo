@@ -8,277 +8,280 @@ export default {
     props: ['session'], 
     emits: ['close', 'update-session', 'clear-history'],
     template: `
-        <div class="app-window" style="height: 100%; display: flex; flex-direction: column; background: #f2f4f6;" v-show="!isWbSelectorOpen && !isMemoryEditorOpen && !isStickerManagerOpen && !isAppearanceOpen">
-            <chat-header name="详细设置" :show-avatar="false" @back="$emit('close')"></chat-header>
+        <!-- [修复] 增加唯一根节点 div -->
+        <div style="height: 100%; width: 100%; position: relative;">
             
-            <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <!-- 1. 形象设置 -->
-                <div class="section-card">
-                    <div class="section-header">角色形象</div>
-                    <div style="display: flex; justify-content: space-around; padding: 10px 0;">
-                        <div class="role-column">
-                            <div class="avatar-wrapper" @click="triggerUpload('aiAvatar')">
-                                <div class="role-avatar" :style="{ backgroundImage: 'url(' + (localSettings.avatar || defaultAiAvatar) + ')' }"></div>
-                                <div class="edit-badge"><i class="ri-camera-fill"></i></div>
+            <!-- 主设置页面 -->
+            <div class="app-window" style="height: 100%; display: flex; flex-direction: column; background: #f2f4f6;" 
+                 v-show="!isWbSelectorOpen && !isMemoryEditorOpen && !isStickerManagerOpen && !isAppearanceOpen">
+                
+                <chat-header name="详细设置" :show-avatar="false" @back="$emit('close')"></chat-header>
+                
+                <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                    <!-- 1. 形象设置 -->
+                    <div class="section-card">
+                        <div class="section-header">角色形象</div>
+                        <div style="display: flex; justify-content: space-around; padding: 10px 0;">
+                            <div class="role-column">
+                                <div class="avatar-wrapper" @click="triggerUpload('aiAvatar')">
+                                    <div class="role-avatar" :style="{ backgroundImage: 'url(' + (localSettings.avatar || defaultAiAvatar) + ')' }"></div>
+                                    <div class="edit-badge"><i class="ri-camera-fill"></i></div>
+                                </div>
+                                <span class="role-label">Char</span>
+                                <input type="file" ref="aiAvatarInput" accept="image/*" style="display:none" @change="handleFile($event, 'aiAvatar')">
                             </div>
-                            <span class="role-label">Char</span>
-                            <input type="file" ref="aiAvatarInput" accept="image/*" style="display:none" @change="handleFile($event, 'aiAvatar')">
-                        </div>
-                        <div class="vs-divider"></div>
-                        <div class="role-column">
-                            <div class="avatar-wrapper" @click="triggerUpload('userAvatar')">
-                                <div class="role-avatar" :style="{ backgroundImage: 'url(' + (localSettings.settings.userAvatar || defaultUserAvatar) + ')' }"></div>
-                                <div class="edit-badge"><i class="ri-camera-fill"></i></div>
+                            <div class="vs-divider"></div>
+                            <div class="role-column">
+                                <div class="avatar-wrapper" @click="triggerUpload('userAvatar')">
+                                    <div class="role-avatar" :style="{ backgroundImage: 'url(' + (localSettings.settings.userAvatar || defaultUserAvatar) + ')' }"></div>
+                                    <div class="edit-badge"><i class="ri-camera-fill"></i></div>
+                                </div>
+                                <span class="role-label">User</span>
+                                <input type="file" ref="userAvatarInput" accept="image/*" style="display:none" @change="handleFile($event, 'userAvatar')">
                             </div>
-                            <span class="role-label">User</span>
-                            <input type="file" ref="userAvatarInput" accept="image/*" style="display:none" @change="handleFile($event, 'userAvatar')">
+                        </div>
+                        <div style="display: flex; gap: 15px; margin-top: 15px;">
+                            <div class="form-group" style="flex:1">
+                                <label class="mini-label">Char 昵称</label>
+                                <input type="text" v-model="localSettings.name" class="glass-input-sm">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label class="mini-label">User 昵称</label>
+                                <input type="text" v-model="localSettings.settings.userName" class="glass-input-sm">
+                            </div>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 15px; margin-top: 15px;">
-                        <div class="form-group" style="flex:1">
-                            <label class="mini-label">Char 昵称</label>
-                            <input type="text" v-model="localSettings.name" class="glass-input-sm">
-                        </div>
-                        <div class="form-group" style="flex:1">
-                            <label class="mini-label">User 昵称</label>
-                            <input type="text" v-model="localSettings.settings.userName" class="glass-input-sm">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 2. 二级菜单入口 -->
-                <div class="wb-entry-card" @click="isWbSelectorOpen = true">
-                    <div style="display: flex; align-items: center;">
-                        <div class="wb-entry-icon"><i class="ri-book-read-line"></i></div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 15px;">世界书挂载</div>
-                            <div style="font-size: 12px; color: #888; margin-top: 2px;">已选择 {{ activeIds.length }} 项规则</div>
+                    <!-- 2. 二级菜单入口 -->
+                    <div class="wb-entry-card" @click="isWbSelectorOpen = true">
+                        <div style="display: flex; align-items: center;">
+                            <div class="wb-entry-icon"><i class="ri-book-read-line"></i></div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">世界书挂载</div>
+                                <div style="font-size: 12px; color: #888; margin-top: 2px;">已选择 {{ activeIds.length }} 项规则</div>
+                            </div>
                         </div>
+                        <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
                     </div>
-                    <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
-                </div>
 
-                <div class="wb-entry-card" @click="isMemoryEditorOpen = true">
-                    <div style="display: flex; align-items: center;">
-                        <div class="wb-entry-icon" style="background: #e0f7fa; color: #00897b;"><i class="ri-brain-line"></i></div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 15px;">记忆工作台</div>
-                            <div style="font-size: 12px; color: #888; margin-top: 2px;">设定记忆权重与自动总结</div>
+                    <div class="wb-entry-card" @click="isMemoryEditorOpen = true">
+                        <div style="display: flex; align-items: center;">
+                            <div class="wb-entry-icon" style="background: #e0f7fa; color: #00897b;"><i class="ri-brain-line"></i></div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">记忆工作台</div>
+                                <div style="font-size: 12px; color: #888; margin-top: 2px;">设定记忆权重与自动总结</div>
+                            </div>
                         </div>
+                        <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
                     </div>
-                    <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
-                </div>
 
-                <div class="wb-entry-card" @click="openStickerManager">
-                    <div style="display: flex; align-items: center;">
-                        <div class="wb-entry-icon" style="background: #fff3e0; color: #ff9800;"><i class="ri-emotion-line"></i></div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 15px;">表情包管理</div>
-                            <div style="font-size: 12px; color: #888; margin-top: 2px;">共 {{ store.stickers.length }} 个项目</div>
+                    <div class="wb-entry-card" @click="openStickerManager">
+                        <div style="display: flex; align-items: center;">
+                            <div class="wb-entry-icon" style="background: #fff3e0; color: #ff9800;"><i class="ri-emotion-line"></i></div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">表情包管理</div>
+                                <div style="font-size: 12px; color: #888; margin-top: 2px;">共 {{ store.stickers.length }} 个项目</div>
+                            </div>
+                        </div>
+                        <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
+                    </div>
+                    
+                    <div class="wb-entry-card" @click="openAppearanceSettings">
+                        <div style="display: flex; align-items: center;">
+                            <div class="wb-entry-icon" style="background: #f3e5f5; color: #9c27b0;"><i class="ri-palette-line"></i></div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">个性化外观</div>
+                                <div style="font-size: 12px; color: #888; margin-top: 2px;">气泡大小、自定义 CSS</div>
+                            </div>
+                        </div>
+                        <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
+                    </div>
+
+                    <!-- 3. 聊天模式 -->
+                    <div class="section-card">
+                        <div class="section-header">回复模式</div>
+                        
+                        <div class="switch-row" style="background:transparent; padding:0; margin:0;">
+                            <div style="flex:1;">
+                                <span style="font-size:14px; font-weight:600;">长文/小说模式</span>
+                                <div style="font-size:11px; color:#888; margin-top:2px;">开启后不再拆分气泡</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" v-model="localSettings.settings.enableLongText">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <transition name="slide-down">
+                            <div v-if="localSettings.settings.enableLongText" class="advanced-mode-panel" style="margin-top: 15px; margin-bottom: 15px;">
+                                <div class="form-group">
+                                    <label class="mini-label">文风约束 (Style)</label>
+                                    <textarea v-model="localSettings.settings.novelStyle" class="glass-textarea" style="height: 60px; font-size: 13px;" placeholder="例如：侧重心理描写，辞藻华丽，第三人称..."></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="mini-label">期望字数</label>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <input type="number" v-model.number="localSettings.settings.targetWordCount" class="glass-input-sm" placeholder="默认不限" style="flex:1;">
+                                        <span style="font-size:12px; color:#666;">字左右</span>
+                                    </div>
+                                    <div style="font-size:10px; color:#999; margin-top:4px;">AI 会尽量参考，但不一定精确。</div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="mini-label">叙事视角 (POV)</label>
+                                    <div class="segment-control">
+                                        <div class="segment-item" :class="{ active: !localSettings.settings.novelPov || localSettings.settings.novelPov === 'char' }" @click="localSettings.settings.novelPov = 'char'">Char主视角</div>
+                                        <div class="segment-item" :class="{ active: localSettings.settings.novelPov === 'third' }" @click="localSettings.settings.novelPov = 'third'">上帝视角</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </transition>
+
+                        <div class="switch-row" style="background:transparent; padding:0; margin:10px 0 0 0;">
+                            <div style="flex:1;">
+                                <span style="font-size:14px; font-weight:600;">点击显示翻译</span>
+                                <div style="font-size:11px; color:#888; margin-top:2px;">双语模式，点击气泡查看翻译</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" v-model="localSettings.settings.enableTranslation">
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
-                    <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
+
+                    <!-- 4. 场景 & 剧本 -->
+                    <div class="section-card">
+                        <div class="section-header">聊天背景</div>
+                        <div class="bg-uploader" @click="triggerUpload('bg')" :style="{ backgroundImage: localSettings.settings.background ? 'url(' + localSettings.settings.background + ')' : 'none' }">
+                            <div class="bg-placeholder" v-if="!localSettings.settings.background"><i class="ri-image-add-line"></i><span>点击上传背景图</span></div>
+                            <i v-else class="ri-edit-circle-fill bg-edit-icon"></i>
+                        </div>
+                        <input type="file" ref="bgInput" accept="image/*" style="display:none" @change="handleFile($event, 'bg')">
+                        <button @click="removeBackground" :disabled="!localSettings.settings.background" :style="{ width: '100%', marginTop: '10px', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', fontSize: '13px', cursor: localSettings.settings.background ? 'pointer' : 'not-allowed', background: localSettings.settings.background ? 'rgba(255,59,48,0.1)' : '#f0f0f0', color: localSettings.settings.background ? '#ff3b30' : '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }"><i class="ri-delete-bin-line"></i> {{ localSettings.settings.background ? '移除当前背景' : '暂无背景图片' }}</button>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-header">剧本设定</div>
+                        <div class="form-group"><label class="mini-label">Char 人设</label><textarea v-model="localSettings.settings.systemPrompt" class="glass-textarea" placeholder="例如：你是一个严厉的数学老师..."></textarea></div>
+                        <div class="form-group" style="margin-top: 15px;"><label class="mini-label">User 人设</label><textarea v-model="localSettings.settings.userPersona" class="glass-textarea" placeholder="例如：我是一个经常考零分的学生..."></textarea></div>
+                    </div>
+
+                    <div style="height: 20px;"></div>
+                    <button class="save-btn-lg" @click="handleSave">保存所有修改</button>
+                    <div style="margin-top: 20px; text-align: center;"><button class="danger-btn" @click="showClearModal = true"><i class="ri-delete-bin-line"></i> 清空聊天记录</button></div>
+                    <div style="height: 40px;"></div>
                 </div>
                 
-                <!-- 外观设置入口 -->
-                <div class="wb-entry-card" @click="openAppearanceSettings">
-                    <div style="display: flex; align-items: center;">
-                        <div class="wb-entry-icon" style="background: #f3e5f5; color: #9c27b0;"><i class="ri-palette-line"></i></div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 15px;">个性化外观</div>
-                            <div style="font-size: 12px; color: #888; margin-top: 2px;">气泡大小、自定义 CSS</div>
-                        </div>
-                    </div>
-                    <i class="ri-arrow-right-s-line" style="color: #ccc; font-size: 24px;"></i>
-                </div>
+                <div v-if="showClearModal" class="center-modal-overlay" @click="showClearModal = false" style="z-index: 500;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px;">确认清空?</h3><p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 10px;">当前会话的所有聊天记录将被永久删除。</p><div style="display: flex; gap: 10px; width: 100%;"><button class="api-save-btn" style="margin:0; flex:1; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showClearModal = false">取消</button><button class="api-delete-btn" style="margin:0; flex:1; padding:12px;" @click="confirmClear">清空</button></div></div></div>
+            </div>
 
-                <!-- 3. 聊天模式 -->
-                <div class="section-card">
-                    <div class="section-header">回复模式</div>
-                    
-                    <div class="switch-row" style="background:transparent; padding:0; margin:0;">
-                        <div style="flex:1;">
-                            <span style="font-size:14px; font-weight:600;">长文/小说模式</span>
-                            <div style="font-size:11px; color:#888; margin-top:2px;">开启后不再拆分气泡</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.settings.enableLongText">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="switch-row" style="background:transparent; padding:0; margin:10px 0 0 0;">
-                        <div style="flex:1;">
-                            <span style="font-size:14px; font-weight:600;">点击显示翻译</span>
-                            <div style="font-size:11px; color:#888; margin-top:2px;">双语模式，点击气泡查看翻译</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.settings.enableTranslation">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div v-if="localSettings.settings.enableLongText" class="advanced-mode-panel">
+            <!-- 二级页面：个性化外观 -->
+            <div class="wb-selector-page" v-if="isAppearanceOpen">
+                <chat-header name="个性化外观" :show-avatar="false" @back="cancelAppearance">
+                    <template #right><span style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="saveAppearance">完成</span></template>
+                </chat-header>
+                
+                <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                    <!-- 气泡大小 -->
+                    <div class="section-card">
+                        <div class="section-header">字体与排版</div>
                         <div class="form-group">
-                            <label class="mini-label">文风约束 (Style)</label>
-                            <textarea v-model="localSettings.settings.novelStyle" class="glass-textarea" style="height: 60px; font-size: 13px;" placeholder="例如：侧重心理描写，辞藻华丽，第三人称..."></textarea>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 20px;">
                             <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                                <label class="mini-label">目标篇幅</label>
-                                <span style="font-size:11px; font-weight:600; color:#333;">{{ lengthLabel }}</span>
+                                <label class="mini-label">本会话气泡字体大小</label>
+                                <span style="font-size:12px; font-weight:600;">{{ localSettings.settings.fontSize }}px</span>
                             </div>
-                            <input type="range" class="styled-range" v-model.number="localSettings.settings.novelLength" min="0" max="3" step="1" :style="sliderStyle">
-                            <div style="display:flex; justify-content:space-between; font-size:10px; color:#999; margin-top:6px;">
-                                <span>短</span><span>适中</span><span>长</span><span>超长</span>
+                            <input 
+                                type="range" 
+                                class="styled-range" 
+                                v-model.number="localSettings.settings.fontSize" 
+                                min="10" max="20" step="1"
+                                :style="sliderStyleDynamic"
+                            >
+                            <div style="font-size:10px; color:#999; margin-top:5px; text-align:right;">拖动滑块覆盖全局设置</div>
+                        </div>
+                    </div>
+
+                    <!-- CSS 预览 -->
+                    <div class="section-card">
+                        <div class="section-header">自定义 CSS</div>
+                        <div class="css-preview-box" :style="{ backgroundImage: localSettings.settings.background ? 'url(' + localSettings.settings.background + ')' : 'none', minHeight: '120px', padding: '15px', border: '1px solid #eee', borderRadius: '16px', marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundSize: 'cover', backgroundPosition: 'center' }">
+                            <div v-html="previewStyleTag"></div>
+                            <div class="msg-row ai" style="display:flex; align-items:flex-start; gap:8px;">
+                                <div class="msg-avatar" :style="{ width:'34px', height:'34px', borderRadius:'50%', background:'#ddd', flexShrink:0, marginTop: '2px', backgroundImage: 'url(' + (localSettings.avatar || defaultAiAvatar) + ')' }"></div>
+                                <div class="bubble" :style="{ background:'#fff', color:'#333', padding:'10px 14px', borderRadius:'12px', maxWidth:'75%', fontSize: localSettings.settings.fontSize + 'px', border:'1px solid rgba(0,0,0,0.02)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }">Char 预览</div>
+                            </div>
+                            <div class="msg-row me" style="display:flex; justify-content:flex-end; align-items:flex-start; gap:8px;">
+                                <div class="bubble" :style="{ background:'#4a4a4a', color:'#fff', padding:'10px 14px', borderRadius:'12px', maxWidth:'75%', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', fontSize: localSettings.settings.fontSize + 'px' }">User 预览</div>
+                                <div class="msg-avatar" :style="{ width:'34px', height:'34px', borderRadius:'50%', background:'#ddd', flexShrink:0, marginTop: '2px', backgroundImage: 'url(' + (localSettings.settings.userAvatar || defaultUserAvatar) + ')' }"></div>
                             </div>
                         </div>
-                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="mini-label">叙事视角 (POV)</label>
-                            <div class="segment-control">
-                                <div class="segment-item" :class="{ active: !localSettings.settings.novelPov || localSettings.settings.novelPov === 'char' }" @click="localSettings.settings.novelPov = 'char'">Char主视角</div>
-                                <div class="segment-item" :class="{ active: localSettings.settings.novelPov === 'third' }" @click="localSettings.settings.novelPov = 'third'">上帝视角</div>
-                            </div>
-                        </div>
+                        <textarea v-model="localSettings.settings.customCss" class="glass-textarea code-font" style="height: 120px; font-family: monospace; font-size: 12px; margin-top: 10px;" placeholder="/* 输入 CSS 实时预览 */"></textarea>
                     </div>
-                </div>
-
-                <!-- 4. 场景 & 剧本 -->
-                <div class="section-card">
-                    <div class="section-header">聊天背景</div>
-                    <div class="bg-uploader" @click="triggerUpload('bg')" :style="{ backgroundImage: localSettings.settings.background ? 'url(' + localSettings.settings.background + ')' : 'none' }">
-                        <div class="bg-placeholder" v-if="!localSettings.settings.background"><i class="ri-image-add-line"></i><span>点击上传背景图</span></div>
-                        <i v-else class="ri-edit-circle-fill bg-edit-icon"></i>
-                    </div>
-                    <input type="file" ref="bgInput" accept="image/*" style="display:none" @change="handleFile($event, 'bg')">
-                    <button @click="removeBackground" :disabled="!localSettings.settings.background" :style="{ width: '100%', marginTop: '10px', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', fontSize: '13px', cursor: localSettings.settings.background ? 'pointer' : 'not-allowed', background: localSettings.settings.background ? 'rgba(255,59,48,0.1)' : '#f0f0f0', color: localSettings.settings.background ? '#ff3b30' : '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }"><i class="ri-delete-bin-line"></i> {{ localSettings.settings.background ? '移除当前背景' : '暂无背景图片' }}</button>
-                </div>
-
-                <div class="section-card">
-                    <div class="section-header">剧本设定</div>
-                    <div class="form-group"><label class="mini-label">Char 人设</label><textarea v-model="localSettings.settings.systemPrompt" class="glass-textarea" placeholder="例如：你是一个严厉的数学老师..."></textarea></div>
-                    <div class="form-group" style="margin-top: 15px;"><label class="mini-label">User 人设</label><textarea v-model="localSettings.settings.userPersona" class="glass-textarea" placeholder="例如：我是一个经常考零分的学生..."></textarea></div>
-                </div>
-
-                <div style="height: 20px;"></div>
-                <button class="save-btn-lg" @click="handleSave">保存所有修改</button>
-                <div style="margin-top: 20px; text-align: center;"><button class="danger-btn" @click="showClearModal = true"><i class="ri-delete-bin-line"></i> 清空聊天记录</button></div>
-                <div style="height: 40px;"></div>
-            </div>
-            
-            <div v-if="showClearModal" class="center-modal-overlay" @click="showClearModal = false" style="z-index: 500;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px;">确认清空?</h3><p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 10px;">当前会话的所有聊天记录将被永久删除。</p><div style="display: flex; gap: 10px; width: 100%;"><button class="api-save-btn" style="margin:0; flex:1; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showClearModal = false">取消</button><button class="api-delete-btn" style="margin:0; flex:1; padding:12px;" @click="confirmClear">清空</button></div></div></div>
-        </div>
-
-        <!-- 二级页面：个性化外观 -->
-        <div class="wb-selector-page" v-if="isAppearanceOpen">
-            <!-- 顶部栏：返回触发 cancelAppearance，完成触发 saveAppearance -->
-            <chat-header name="个性化外观" :show-avatar="false" @back="cancelAppearance">
-                <template #right><span style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="saveAppearance">完成</span></template>
-            </chat-header>
-            
-            <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <!-- 气泡大小 -->
-                <div class="section-card">
-                    <div class="section-header">字体与排版</div>
-                    <div class="form-group">
-                        <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                            <label class="mini-label">本会话气泡字体大小</label>
-                            <span style="font-size:12px; font-weight:600;">{{ localSettings.settings.fontSize }}px</span>
-                        </div>
-                        <input 
-                            type="range" 
-                            class="styled-range" 
-                            v-model.number="localSettings.settings.fontSize" 
-                            min="10" max="20" step="1"
-                            :style="sliderStyleDynamic"
-                        >
-                        <div style="font-size:10px; color:#999; margin-top:5px; text-align:right;">拖动滑块覆盖全局设置</div>
-                    </div>
-                </div>
-
-                <!-- CSS 预览 -->
-                <div class="section-card">
-                    <div class="section-header">自定义 CSS</div>
-                    <div class="css-preview-box" :style="{ backgroundImage: localSettings.settings.background ? 'url(' + localSettings.settings.background + ')' : 'none', minHeight: '120px', padding: '15px', border: '1px solid #eee', borderRadius: '16px', marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundSize: 'cover', backgroundPosition: 'center' }">
-                        <div v-html="previewStyleTag"></div>
-                        <!-- 预览气泡：更新为 12px 圆角，顶部对齐，头像下压 2px -->
-                        <div class="msg-row ai" style="display:flex; align-items:flex-start; gap:8px;">
-                            <div class="msg-avatar" :style="{ width:'34px', height:'34px', borderRadius:'50%', background:'#ddd', flexShrink:0, marginTop: '2px', backgroundImage: 'url(' + (localSettings.avatar || defaultAiAvatar) + ')' }"></div>
-                            <div class="bubble" :style="{ background:'#fff', color:'#333', padding:'10px 14px', borderRadius:'12px', maxWidth:'75%', fontSize: localSettings.settings.fontSize + 'px', border:'1px solid rgba(0,0,0,0.02)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }">Char 预览</div>
-                        </div>
-                        <div class="msg-row me" style="display:flex; justify-content:flex-end; align-items:flex-start; gap:8px;">
-                            <div class="bubble" :style="{ background:'#4a4a4a', color:'#fff', padding:'10px 14px', borderRadius:'12px', maxWidth:'75%', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', fontSize: localSettings.settings.fontSize + 'px' }">User 预览</div>
-                            <div class="msg-avatar" :style="{ width:'34px', height:'34px', borderRadius:'50%', background:'#ddd', flexShrink:0, marginTop: '2px', backgroundImage: 'url(' + (localSettings.settings.userAvatar || defaultUserAvatar) + ')' }"></div>
-                        </div>
-                    </div>
-                    <textarea v-model="localSettings.settings.customCss" class="glass-textarea code-font" style="height: 120px; font-family: monospace; font-size: 12px; margin-top: 10px;" placeholder="/* 输入 CSS 实时预览 */"></textarea>
                 </div>
             </div>
-        </div>
 
-        <!-- 其他二级页面 ... -->
-        <div class="wb-selector-page" v-if="isWbSelectorOpen">
-            <chat-header name="选择世界书" :show-avatar="false" @back="isWbSelectorOpen = false"><template #right><span style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="isWbSelectorOpen = false">完成</span></template></chat-header>
-            <div style="padding: 15px 20px 0 20px;"><div class="search-bar"><i class="ri-search-line" style="color:#999;"></i><input type="text" v-model="searchQuery" placeholder="搜索规则或文件夹..." class="search-input"></div></div>
-            <div style="flex: 1; overflow-y: auto; padding: 20px;"><div v-if="filteredTree.length === 0" style="text-align:center; color:#999; font-size:12px; margin-top: 50px;">没有找到匹配的内容</div><div class="wb-tree"><wb-tree-item v-for="node in filteredTree" :key="node.id" :node="node" :selected-ids="activeIds" @toggle-book="toggleBook" @toggle-folder="toggleFolder"></wb-tree-item></div></div>
-        </div>
-
-        <div class="wb-selector-page" v-if="isMemoryEditorOpen">
-            <chat-header name="记忆工作台" :show-avatar="false" @back="isMemoryEditorOpen = false"><template #right><span style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="isMemoryEditorOpen = false">完成</span></template></chat-header>
-            <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <div class="section-card"><div class="section-header" style="color:#ffb020;">长期记忆 (Long Term)</div><div style="font-size:12px; color:#666; margin-bottom:10px;">【核心事实】永久生效，权重最高。</div><textarea v-model="localSettings.settings.longTermMemory" class="glass-textarea" style="height: 150px;" placeholder="在此处输入永久设定..."></textarea></div>
-                <div class="section-card"><div class="section-header" style="color:#007aff;">短期记忆 (Short Term)</div><div style="font-size:12px; color:#666; margin-bottom:10px;">【即时状态】记录最近发生的事件流，随对话更新。</div><div style="display: flex; gap: 10px; margin-bottom: 10px;"><div class="form-group" style="flex:1; margin:0;"><label class="mini-label">自动总结阈值 (消息数)</label><input type="number" v-model.number="localSettings.settings.summaryThreshold" class="glass-input-sm" placeholder="0 为关闭"></div></div><div class="form-group"><label class="mini-label">总结提示词 (Prompt)</label><input type="text" v-model="localSettings.settings.summaryPrompt" class="glass-input-sm" placeholder="默认：请简要总结上述对话..."></div><button @click="handleAutoSummary" :disabled="isSummarizing" style="width:100%; padding:12px; margin: 10px 0; border-radius:12px; border:none; background:#007aff; color:#fff; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><i :class="isSummarizing ? 'ri-loader-4-line' : 'ri-magic-line'" :style="{ animation: isSummarizing ? 'spin 1s linear infinite' : '' }"></i>{{ isSummarizing ? '正在读取最近记录并总结...' : '立即手动总结' }}</button><div class="form-group"><label class="mini-label">记忆内容 (可编辑)</label><textarea v-model="localSettings.settings.shortTermMemory" class="glass-textarea" style="height: 150px;" placeholder="在此处输入摘要..."></textarea></div></div>
+            <!-- 其他二级页面 ... (保持不变) -->
+            <div class="wb-selector-page" v-if="isWbSelectorOpen">
+                <chat-header name="选择世界书" :show-avatar="false" @back="isWbSelectorOpen = false"><template #right><span style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="isWbSelectorOpen = false">完成</span></template></chat-header>
+                <div style="padding: 15px 20px 0 20px;"><div class="search-bar"><i class="ri-search-line" style="color:#999;"></i><input type="text" v-model="searchQuery" placeholder="搜索规则或文件夹..." class="search-input"></div></div>
+                <div style="flex: 1; overflow-y: auto; padding: 20px;"><div v-if="filteredTree.length === 0" style="text-align:center; color:#999; font-size:12px; margin-top: 50px;">没有找到匹配的内容</div><div class="wb-tree"><wb-tree-item v-for="node in filteredTree" :key="node.id" :node="node" :selected-ids="activeIds" @toggle-book="toggleBook" @toggle-folder="toggleFolder"></wb-tree-item></div></div>
             </div>
-        </div>
 
-        <div class="wb-selector-page" v-if="isStickerManagerOpen">
-            <chat-header :name="currentFolderName" :show-avatar="false" @back="goBackFolder">
-                <template #right>
-                    <span v-if="isMultiSelect" style="color: #333; font-weight: 600; font-size: 14px; cursor: pointer; margin-right: 15px;" @click="toggleSelectAll">
-                        {{ isAllSelected ? '取消全选' : '全选' }}
-                    </span>
-                    <span v-if="!isMultiSelect" style="color: #333; font-weight: 600; font-size: 14px; cursor: pointer;" @click="startMultiSelect">管理</span>
-                    <span v-else style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="cancelMultiSelect">完成</span>
-                </template>
-            </chat-header>
-            <div style="padding: 10px 20px 0 20px; display: flex;">
-                <div class="sticker-crumb">
-                    <span class="crumb-item" :class="{ active: folderStack.length === 0 }" @click="goToRoot">全部</span>
-                    <template v-for="(folder, idx) in folderStack" :key="idx">
-                        <span class="crumb-sep">/</span>
-                        <span class="crumb-item" :class="{ active: idx === folderStack.length - 1 }">{{ folder.name }}</span>
+            <div class="wb-selector-page" v-if="isMemoryEditorOpen">
+                <chat-header name="记忆工作台" :show-avatar="false" @back="isMemoryEditorOpen = false"><template #right><span style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="isMemoryEditorOpen = false">完成</span></template></chat-header>
+                <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                    <div class="section-card"><div class="section-header" style="color:#ffb020;">长期记忆 (Long Term)</div><div style="font-size:12px; color:#666; margin-bottom:10px;">【核心事实】永久生效，权重最高。</div><textarea v-model="localSettings.settings.longTermMemory" class="glass-textarea" style="height: 150px;" placeholder="在此处输入永久设定..."></textarea></div>
+                    <div class="section-card"><div class="section-header" style="color:#007aff;">短期记忆 (Short Term)</div><div style="font-size:12px; color:#666; margin-bottom:10px;">【即时状态】记录最近发生的事件流，随对话更新。</div><div style="display: flex; gap: 10px; margin-bottom: 10px;"><div class="form-group" style="flex:1; margin:0;"><label class="mini-label">自动总结阈值 (消息数)</label><input type="number" v-model.number="localSettings.settings.summaryThreshold" class="glass-input-sm" placeholder="0 为关闭"></div></div><div class="form-group"><label class="mini-label">总结提示词 (Prompt)</label><input type="text" v-model="localSettings.settings.summaryPrompt" class="glass-input-sm" placeholder="默认：请简要总结上述对话..."></div><button @click="handleAutoSummary" :disabled="isSummarizing" style="width:100%; padding:12px; margin: 10px 0; border-radius:12px; border:none; background:#007aff; color:#fff; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><i :class="isSummarizing ? 'ri-loader-4-line' : 'ri-magic-line'" :style="{ animation: isSummarizing ? 'spin 1s linear infinite' : '' }"></i>{{ isSummarizing ? '正在读取最近记录并总结...' : '立即手动总结' }}</button><div class="form-group"><label class="mini-label">记忆内容 (可编辑)</label><textarea v-model="localSettings.settings.shortTermMemory" class="glass-textarea" style="height: 150px;" placeholder="在此处输入摘要..."></textarea></div></div>
+                </div>
+            </div>
+
+            <div class="wb-selector-page" v-if="isStickerManagerOpen">
+                <chat-header :name="currentFolderName" :show-avatar="false" @back="goBackFolder">
+                    <template #right>
+                        <span v-if="isMultiSelect" style="color: #333; font-weight: 600; font-size: 14px; cursor: pointer; margin-right: 15px;" @click="toggleSelectAll">
+                            {{ isAllSelected ? '取消全选' : '全选' }}
+                        </span>
+                        <span v-if="!isMultiSelect" style="color: #333; font-weight: 600; font-size: 14px; cursor: pointer;" @click="startMultiSelect">管理</span>
+                        <span v-else style="color: #007aff; font-weight: 600; font-size: 14px; cursor: pointer;" @click="cancelMultiSelect">完成</span>
                     </template>
+                </chat-header>
+                <div style="padding: 10px 20px 0 20px; display: flex;">
+                    <div class="sticker-crumb">
+                        <span class="crumb-item" :class="{ active: folderStack.length === 0 }" @click="goToRoot">全部</span>
+                        <template v-for="(folder, idx) in folderStack" :key="idx">
+                            <span class="crumb-sep">/</span>
+                            <span class="crumb-item" :class="{ active: idx === folderStack.length - 1 }">{{ folder.name }}</span>
+                        </template>
+                    </div>
                 </div>
-            </div>
-            <div v-if="!isMultiSelect" style="padding: 0 20px; font-size: 11px; color: #999; margin-bottom: 10px;">
-                <i class="ri-information-line"></i> 点击图片启用/禁用 (彩色为启用，黑白为禁用)
-            </div>
-            <div style="flex: 1; overflow-y: auto; padding: 20px;">
-                <div class="sticker-grid">
-                    <div v-if="!isMultiSelect" class="sticker-grid-item add-btn" @click="showAddMenu = true"><i class="ri-add-line"></i><span>添加</span></div>
-                    <div v-for="(item, idx) in currentFolderList" :key="'f-'+idx">
-                        <div v-if="item.type === 'folder'" class="sticker-grid-item folder" :class="{ selected: selectedItems.includes(item) }" @click="handleItemClick(item)">
-                            <i class="ri-folder-3-fill folder-icon"></i><span class="folder-name">{{ item.name }}</span>
-                            <div v-if="isMultiSelect" class="sticker-select-overlay"><div class="sticker-check"><i class="ri-check-line"></i></div></div>
-                        </div>
-                        <div v-else class="sticker-grid-item" :class="{ 'selected': selectedItems.includes(item), 'inactive': !isActiveSticker(item) }" @click="handleItemClick(item)">
-                            <img :src="item.url" class="sticker-img-preview" @error="handleImgError"><div class="sticker-name-tag">{{ item.name || '未命名' }}</div>
-                            <div v-if="isMultiSelect" class="sticker-select-overlay"><div class="sticker-check"><i class="ri-check-line"></i></div></div>
+                <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                    <div class="sticker-grid">
+                        <div v-if="!isMultiSelect" class="sticker-grid-item add-btn" @click="showAddMenu = true"><i class="ri-add-line"></i><span>添加</span></div>
+                        <div v-for="(item, idx) in currentFolderList" :key="'f-'+idx">
+                            <div v-if="item.type === 'folder'" class="sticker-grid-item folder" :class="{ selected: selectedItems.includes(item) }" @click="handleItemClick(item)">
+                                <i class="ri-folder-3-fill folder-icon"></i><span class="folder-name">{{ item.name }}</span>
+                                <div v-if="isMultiSelect" class="sticker-select-overlay"><div class="sticker-check"><i class="ri-check-line"></i></div></div>
+                            </div>
+                            <div v-else class="sticker-grid-item" :class="{ 'selected': selectedItems.includes(item), 'inactive': !isActiveSticker(item) }" @click="handleItemClick(item)">
+                                <img :src="item.url" class="sticker-img-preview" @error="handleImgError"><div class="sticker-name-tag">{{ item.name || '未命名' }}</div>
+                                <div v-if="isMultiSelect" class="sticker-select-overlay"><div class="sticker-check"><i class="ri-check-line"></i></div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div v-if="isMultiSelect" class="sticker-action-bar">
+                    <div @click="triggerBatchActive(true)" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; color: #4cd964;"><i class="ri-check-double-line" style="font-size:24px;"></i><span style="font-size:10px;">AI启用</span></div>
+                    <div @click="triggerBatchActive(false)" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; color: #ff9500;"><i class="ri-close-circle-line" style="font-size:24px;"></i><span style="font-size:10px;">AI禁用</span></div>
+                    <div style="width:1px; height:20px; background:rgba(255,255,255,0.2);"></div>
+                    <div @click="triggerBatchMove" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;"><i class="ri-folder-transfer-line" style="font-size:24px;"></i><span style="font-size:10px;">移动</span></div>
+                    <div @click="triggerBatchDelete" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; color:#ff3b30;"><i class="ri-delete-bin-line" style="font-size:24px;"></i><span style="font-size:10px;">删除</span></div>
+                </div>
+                <div v-if="showAddMenu" class="center-modal-overlay" @click="showAddMenu = false" style="z-index: 600;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px; margin-bottom: 10px;">添加内容</h3><button class="api-add-btn" @click="openUploadModal('local')"><i class="ri-image-add-line"></i> 单张添加</button><button class="api-add-btn" @click="openUploadModal('batch')" style="margin-top:10px;"><i class="ri-links-line"></i> 批量链接导入</button><button class="api-add-btn" @click="openCreateFolder" style="margin-top:10px;"><i class="ri-folder-add-line"></i> 新建文件夹</button></div></div>
+                <div v-if="showUploadModal" class="center-modal-overlay" @click="showUploadModal = false" style="z-index: 610;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px; margin-bottom: 15px;">{{ uploadMode === 'batch' ? '批量导入链接' : '添加表情' }}</h3><div v-if="uploadMode === 'local'"><div class="segment-control" style="margin-bottom: 15px;"><div class="segment-item" :class="{ active: localSubMode === 'file' }" @click="localSubMode = 'file'">本地文件</div><div class="segment-item" :class="{ active: localSubMode === 'url' }" @click="localSubMode = 'url'">网络链接</div></div><div v-if="localSubMode === 'file'" class="bg-uploader" style="height: 100px; margin-bottom: 10px;" @click="stickerFileInput.click()"><div class="bg-placeholder" v-if="!tempStickerUrl"><i class="ri-upload-cloud-line"></i><span>点击选择图片</span></div><div v-else class="bg-placeholder" :style="{ backgroundImage: 'url(' + tempStickerUrl + ')', backgroundSize: 'contain', backgroundRepeat: 'no-repeat' }"></div></div><input type="file" ref="stickerFileInput" accept="image/*" style="display:none" @change="handleStickerFile"><input v-if="localSubMode === 'url'" v-model="tempStickerUrl" class="glass-input" placeholder="输入图片 URL" style="margin-bottom: 10px;"><input v-model="tempStickerName" class="glass-input" placeholder="表情名称 (必填，方便AI理解)" style="margin-bottom: 10px;"></div><div v-if="uploadMode === 'batch'"><textarea v-model="batchUrls" class="batch-textarea" placeholder="格式：名称:链接 (支持中文冒号)&#10;例如：开心猫:https://example.com/cat.jpg"></textarea><div style="font-size:10px; color:#999; margin-bottom:10px;">请严格遵守 名称:链接 格式，以便 AI 识别。</div></div><div style="display: flex; gap: 10px; width: 100%;"><button class="api-delete-btn" style="margin:0; flex:1; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showUploadModal = false">取消</button><button class="api-save-btn" style="margin:0; flex:1; padding:12px;" @click="confirmUpload">确定</button></div></div></div>
+                <div v-if="showFolderModal" class="center-modal-overlay" @click="showFolderModal = false" style="z-index: 610;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px;">新建文件夹</h3><input v-model="newFolderName" class="glass-input" placeholder="文件夹名称" style="margin: 15px 0;" @keyup.enter="confirmCreateFolder"><div style="display: flex; gap: 10px; width: 100%;"><button class="api-delete-btn" style="margin:0; flex:1; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showFolderModal = false">取消</button><button class="api-save-btn" style="margin:0; flex:1; padding:12px;" @click="confirmCreateFolder">创建</button></div></div></div>
+                <div v-if="showMoveModal" class="center-modal-overlay" @click="showMoveModal = false" style="z-index: 620;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px;">移动到...</h3><div style="max-height: 200px; overflow-y: auto; margin: 15px 0; border: 1px solid #eee; border-radius: 12px;"><div class="menu-item" @click="executeMove(null)" style="border-bottom: 1px solid #f5f5f5;"><i class="ri-home-line"></i> 全部</div><div v-for="f in store.stickers.filter(i => i.type === 'folder' && !selectedItems.includes(i))" :key="f.id" class="menu-item" @click="executeMove(f)"><i class="ri-folder-line"></i> {{ f.name }}</div></div><button class="api-delete-btn" style="width:100%; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showMoveModal = false">取消</button></div></div>
             </div>
-            <div v-if="isMultiSelect" class="sticker-action-bar">
-                <div @click="triggerBatchActive(true)" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; color: #4cd964;"><i class="ri-check-double-line" style="font-size:24px;"></i><span style="font-size:10px;">AI启用</span></div>
-                <div @click="triggerBatchActive(false)" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; color: #ff9500;"><i class="ri-close-circle-line" style="font-size:24px;"></i><span style="font-size:10px;">AI禁用</span></div>
-                <div style="width:1px; height:20px; background:rgba(255,255,255,0.2);"></div>
-                <div @click="triggerBatchMove" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;"><i class="ri-folder-transfer-line" style="font-size:24px;"></i><span style="font-size:10px;">移动</span></div>
-                <div @click="triggerBatchDelete" style="display:flex; flex-direction:column; align-items:center; cursor:pointer; color:#ff3b30;"><i class="ri-delete-bin-line" style="font-size:24px;"></i><span style="font-size:10px;">删除</span></div>
-            </div>
-            <div v-if="showAddMenu" class="center-modal-overlay" @click="showAddMenu = false" style="z-index: 600;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px; margin-bottom: 10px;">添加内容</h3><button class="api-add-btn" @click="openUploadModal('local')"><i class="ri-image-add-line"></i> 单张添加</button><button class="api-add-btn" @click="openUploadModal('batch')" style="margin-top:10px;"><i class="ri-links-line"></i> 批量链接导入</button><button class="api-add-btn" @click="openCreateFolder" style="margin-top:10px;"><i class="ri-folder-add-line"></i> 新建文件夹</button></div></div>
-            <div v-if="showUploadModal" class="center-modal-overlay" @click="showUploadModal = false" style="z-index: 610;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px; margin-bottom: 15px;">{{ uploadMode === 'batch' ? '批量导入链接' : '添加表情' }}</h3><div v-if="uploadMode === 'local'"><div class="segment-control" style="margin-bottom: 15px;"><div class="segment-item" :class="{ active: localSubMode === 'file' }" @click="localSubMode = 'file'">本地文件</div><div class="segment-item" :class="{ active: localSubMode === 'url' }" @click="localSubMode = 'url'">网络链接</div></div><div v-if="localSubMode === 'file'" class="bg-uploader" style="height: 100px; margin-bottom: 10px;" @click="stickerFileInput.click()"><div class="bg-placeholder" v-if="!tempStickerUrl"><i class="ri-upload-cloud-line"></i><span>点击选择图片</span></div><div v-else class="bg-placeholder" :style="{ backgroundImage: 'url(' + tempStickerUrl + ')', backgroundSize: 'contain', backgroundRepeat: 'no-repeat' }"></div></div><input type="file" ref="stickerFileInput" accept="image/*" style="display:none" @change="handleStickerFile"><input v-if="localSubMode === 'url'" v-model="tempStickerUrl" class="glass-input" placeholder="输入图片 URL" style="margin-bottom: 10px;"><input v-model="tempStickerName" class="glass-input" placeholder="表情名称 (必填，方便AI理解)" style="margin-bottom: 10px;"></div><div v-if="uploadMode === 'batch'"><textarea v-model="batchUrls" class="batch-textarea" placeholder="格式：名称:链接 (支持中文冒号)&#10;例如：开心猫:https://example.com/cat.jpg"></textarea><div style="font-size:10px; color:#999; margin-bottom:10px;">请严格遵守 名称:链接 格式，以便 AI 识别。</div></div><div style="display: flex; gap: 10px; width: 100%;"><button class="api-delete-btn" style="margin:0; flex:1; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showUploadModal = false">取消</button><button class="api-save-btn" style="margin:0; flex:1; padding:12px;" @click="confirmUpload">确定</button></div></div></div>
-            <div v-if="showFolderModal" class="center-modal-overlay" @click="showFolderModal = false" style="z-index: 610;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px;">新建文件夹</h3><input v-model="newFolderName" class="glass-input" placeholder="文件夹名称" style="margin: 15px 0;" @keyup.enter="confirmCreateFolder"><div style="display: flex; gap: 10px; width: 100%;"><button class="api-delete-btn" style="margin:0; flex:1; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showFolderModal = false">取消</button><button class="api-save-btn" style="margin:0; flex:1; padding:12px;" @click="confirmCreateFolder">创建</button></div></div></div>
-            <div v-if="showMoveModal" class="center-modal-overlay" @click="showMoveModal = false" style="z-index: 620;"><div class="center-modal-box" @click.stop><h3 style="text-align: center; font-size: 16px;">移动到...</h3><div style="max-height: 200px; overflow-y: auto; margin: 15px 0; border: 1px solid #eee; border-radius: 12px;"><div class="menu-item" @click="executeMove(null)" style="border-bottom: 1px solid #f5f5f5;"><i class="ri-home-line"></i> 全部</div><div v-for="f in store.stickers.filter(i => i.type === 'folder' && !selectedItems.includes(i))" :key="f.id" class="menu-item" @click="executeMove(f)"><i class="ri-folder-line"></i> {{ f.name }}</div></div><button class="api-delete-btn" style="width:100%; padding:12px; background:rgba(0,0,0,0.05); color:#666;" @click="showMoveModal = false">取消</button></div></div>
         </div>
     `,
     setup(props, { emit }) {
@@ -295,6 +298,7 @@ export default {
         const bgInput = ref(null);
         const isWbSelectorOpen = ref(false);
         const isMemoryEditorOpen = ref(false);
+        const isStickerManagerOpen = ref(false);
         const isAppearanceOpen = ref(false);
         const isSummarizing = ref(false);
         const searchQuery = ref('');
@@ -302,8 +306,6 @@ export default {
         const activeIds = ref(localSettings.value.settings.activeWorldbooks || []);
         const showClearModal = ref(false);
         
-        // --- 表情包变量 ---
-        const isStickerManagerOpen = ref(false);
         const folderStack = ref([]); 
         const isMultiSelect = ref(false);
         const selectedItems = ref([]);
@@ -318,28 +320,23 @@ export default {
         const showFolderModal = ref(false);
         const newFolderName = ref('');
         const showMoveModal = ref(false);
-
-        // --- 外观设置逻辑 (备份与还原) ---
         const originalFontSize = ref(13);
 
+        // [修复] 补全外观设置相关函数
         const openAppearanceSettings = () => {
-            // 记录进入时的值
             originalFontSize.value = localSettings.value.settings.fontSize || 13;
             isAppearanceOpen.value = true;
         };
 
         const cancelAppearance = () => {
-            // 还原值
             localSettings.value.settings.fontSize = originalFontSize.value;
             isAppearanceOpen.value = false;
         };
 
         const saveAppearance = () => {
-            // 确认修改，不做还原
             isAppearanceOpen.value = false;
         };
 
-        // 动态计算进度条背景 (黑色进度条)
         const sliderStyleDynamic = computed(() => {
             const val = localSettings.value.settings.fontSize || 13;
             const min = 10;
@@ -350,7 +347,8 @@ export default {
             };
         });
 
-        // ... (其他逻辑保持不变) ...
+        // ... (表情包相关逻辑保持不变) ...
+        const forceSaveStickers = () => { store.stickers = [...store.stickers]; };
         const currentFolderList = computed(() => {
             if (folderStack.value.length === 0) return store.stickers;
             return folderStack.value[folderStack.value.length - 1].children;
@@ -407,7 +405,6 @@ export default {
         const openUploadModal = (mode) => { uploadMode.value = mode; showUploadModal.value = true; showAddMenu.value = false; tempStickerUrl.value = ''; tempStickerName.value = ''; batchUrls.value = ''; };
         const handleStickerFile = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (evt) => { tempStickerUrl.value = evt.target.result; }; reader.readAsDataURL(file); };
         
-        // [新增] 验证图片有效性函数
         const validateImage = (url) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -417,7 +414,6 @@ export default {
             });
         };
 
-        // [修改] 确认上传逻辑：增加图片预加载检查，并收集失败项
         const confirmUpload = async () => {
             const list = currentFolderList.value;
             if (uploadMode.value === 'local') {
@@ -425,18 +421,13 @@ export default {
                 if (!tempStickerName.value.trim()) { alert("请输入表情包名称"); return; }
                 
                 const isValid = await validateImage(tempStickerUrl.value);
-                if (!isValid) {
-                    alert("图片加载失败，请检查链接或文件");
-                    return;
-                }
+                if (!isValid) { alert("图片加载失败，请检查链接或文件"); return; }
 
                 list.push({ type: 'image', url: tempStickerUrl.value, name: tempStickerName.value.trim() });
             } else {
                 const lines = batchUrls.value.split('\n');
                 let addedCount = 0;
                 let failedItems = [];
-                
-                // 临时显示 loading 状态或阻塞按钮 (此处简单处理为异步循环)
                 for (const line of lines) {
                     let cleanLine = line.trim();
                     if (!cleanLine) continue;
@@ -453,30 +444,43 @@ export default {
                                 list.push({ type: 'image', url, name }); 
                                 addedCount++; 
                             } else {
-                                // 截断过长的 URL 以保持弹窗整洁
                                 const shortUrl = url.length > 30 ? url.substring(0, 27) + '...' : url;
                                 failedItems.push(`${name}: ${shortUrl}`);
                             }
                         } 
                     }
                 }
-                
-                if (addedCount === 0 && failedItems.length === 0 && lines.length > 0 && lines[0].trim()) { 
-                    alert("格式错误，请使用：名称:链接"); return; 
-                } else if (failedItems.length > 0) {
-                    // 构建详细的失败报告
-                    const failMsg = failedItems.join('\n');
-                    alert(`成功导入 ${addedCount} 个。\n\n以下 ${failedItems.length} 个因链接无效被跳过：\n${failMsg}`);
-                }
+                if (addedCount === 0 && failedItems.length === 0 && lines.length > 0 && lines[0].trim()) { alert("格式错误，请使用：名称:链接"); return; } 
+                else if (failedItems.length > 0) { const failMsg = failedItems.join('\n'); alert(`成功导入 ${addedCount} 个。\n\n以下 ${failedItems.length} 个因链接无效被跳过：\n${failMsg}`); }
             }
+            forceSaveStickers();
             showUploadModal.value = false;
         };
 
         const openCreateFolder = () => { showFolderModal.value = true; showAddMenu.value = false; newFolderName.value = ''; };
-        const confirmCreateFolder = () => { if (!newFolderName.value.trim()) return; currentFolderList.value.unshift({ type: 'folder', id: Date.now() + Math.random().toString(), name: newFolderName.value.trim(), children: [] }); showFolderModal.value = false; };
-        const triggerBatchDelete = () => { if (confirm(`确定删除这 ${selectedItems.value.length} 项吗？`)) { const list = currentFolderList.value; selectedItems.value.forEach(item => { const idx = list.indexOf(item); if (idx > -1) list.splice(idx, 1); }); cancelMultiSelect(); } };
+        const confirmCreateFolder = () => { 
+            if (!newFolderName.value.trim()) return; 
+            currentFolderList.value.unshift({ type: 'folder', id: Date.now() + Math.random().toString(), name: newFolderName.value.trim(), children: [] }); 
+            forceSaveStickers(); 
+            showFolderModal.value = false; 
+        };
+        const triggerBatchDelete = () => { 
+            if (confirm(`确定删除这 ${selectedItems.value.length} 项吗？`)) { 
+                const list = currentFolderList.value; 
+                selectedItems.value.forEach(item => { const idx = list.indexOf(item); if (idx > -1) list.splice(idx, 1); }); 
+                forceSaveStickers(); 
+                cancelMultiSelect(); 
+            } 
+        };
         const triggerBatchMove = () => { if (selectedItems.value.length === 0) return; showMoveModal.value = true; };
-        const executeMove = (targetFolder) => { const targetList = targetFolder ? targetFolder.children : store.stickers; const sourceList = currentFolderList.value; if (selectedItems.value.includes(targetFolder)) { alert("不能移动到选中的文件夹内"); return; } selectedItems.value.forEach(item => { const idx = sourceList.indexOf(item); if (idx > -1) { sourceList.splice(idx, 1); targetList.push(item); } }); showMoveModal.value = false; cancelMultiSelect(); };
+        const executeMove = (targetFolder) => { 
+            const targetList = targetFolder ? targetFolder.children : store.stickers; 
+            const sourceList = currentFolderList.value; 
+            if (selectedItems.value.includes(targetFolder)) { alert("不能移动到选中的文件夹内"); return; } 
+            selectedItems.value.forEach(item => { const idx = sourceList.indexOf(item); if (idx > -1) { sourceList.splice(idx, 1); targetList.push(item); } }); 
+            forceSaveStickers(); 
+            showMoveModal.value = false; cancelMultiSelect(); 
+        };
         const confirmClear = () => { emit('clear-history'); showClearModal.value = false; };
         const handleSave = () => {
             if (!localSettings.value.name || !localSettings.value.name.trim()) { alert("Char 昵称不能为空"); return; }
@@ -487,8 +491,7 @@ export default {
             emit('close');
         };
         const previewStyleTag = computed(() => { if (!localSettings.value.settings.customCss) return ''; return `<style>${localSettings.value.settings.customCss}</style>`; });
-        const lengthLabel = computed(() => { const val = localSettings.value.settings.novelLength; if (val === 0) return '短小精悍'; if (val === 1) return '适中 (默认)'; if (val === 2) return '丰富详实'; if (val === 3) return '超长篇幅'; return ''; });
-        const sliderStyle = computed(() => { const val = localSettings.value.settings.novelLength || 0; const max = 3; const percent = (val / max) * 100; return { background: `linear-gradient(to right, #333 0%, #333 ${percent}%, #e0e0e0 ${percent}%, #e0e0e0 100%)` }; });
+        
         onMounted(() => {
             const allItems = JSON.parse(localStorage.getItem('ai_phone_worldbooks_v2') || '[]');
             const folderMap = {}; allItems.filter(i => i.type === 'folder').forEach(f => folderMap[f.id] = { ...f, children: [] });
@@ -504,9 +507,8 @@ export default {
         const removeBackground = () => { localSettings.value.settings.background = ''; };
         const handleAutoSummary = async () => { const profiles = JSON.parse(localStorage.getItem('ai_phone_profiles') || '[]'); const activeId = localStorage.getItem('ai_phone_active_id'); const config = profiles.find(p => p.id == activeId); if (!config || !config.apiKey) { alert("请先在接口管理中配置 API Key"); return; } const recentMsgs = props.session.messages.slice(-50).map(m => `${m.role}: ${m.content}`).join('\n'); if (!recentMsgs) { alert("暂无聊天记录，无法总结"); return; } isSummarizing.value = true; try { let baseUrl = config.baseUrl.replace(/\/$/, ''); const response = await fetch(`${baseUrl}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` }, body: JSON.stringify({ model: config.model || 'gpt-3.5-turbo', messages: [{ role: 'system', content: 'You are a helpful assistant.' }, { role: 'user', content: `${localSettings.value.settings.summaryPrompt}\n\n【对话内容】\n${recentMsgs}` }], temperature: 0.5, stream: false }) }); if (!response.ok) throw new Error("API Request Failed"); const data = await response.json(); localSettings.value.settings.shortTermMemory = data.choices[0].message.content; } catch (e) { alert("总结失败: " + e.message); } finally { isSummarizing.value = false; } };
 
-        // [新增] 在表情管理列表项中添加 onError 处理 (防止已有坏图显示破裂)
         const handleImgError = (e) => {
-            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NjYyIgZD0iTTIxIDE5VjVjMC0xLjEtLjktMi0yLTJIMUMwLTEuMS0uOS0yLTIgMnYxNGMwIDEuMS45IDIgMiAyaTE4YzEuMSAwIDItLjkgMi0yem0tMTQuNS0yTDEwIDE1LjEybDIuNSAzLjAzIDUgNi41aC0xNmw0LjUtNnpNMjEgNUgxOXYxNGgtLjVMMTYgMTMuNWwtMy0zLjg2LTYgNy44NlY1aDE0eiIvPjwvc3ZnPg=='; // 简单的 broken image 图标
+            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NjYyIgZD0iTTIxIDE5VjVjMC0xLjEtLjktMi0yLTJIMUMwLTEuMS0uOS0yLTIgMnYxNGMwIDEuMS45IDIgMiAyaTE4YzEuMSAwIDItLjkgMi0yem0tMTQuNS0yTDEwIDE1LjEybDIuNSAzLjAzIDUgNi41aC0xNmw0LjUtNnpNMjEgNUgxOXYxNGgtLjVMMTYgMTMuNWwtMy0zLjg2LTYgNy44NlY1aDE0eiIvPjwvc3ZnPg=='; 
             e.target.style.opacity = '0.5';
         };
 
@@ -515,7 +517,7 @@ export default {
             triggerUpload, handleFile, aiAvatarInput, userAvatarInput, bgInput,
             activeIds, toggleBook, toggleFolder, isWbSelectorOpen, searchQuery, filteredTree, previewStyleTag,
             removeBackground, isMemoryEditorOpen, isSummarizing, handleAutoSummary, showClearModal, confirmClear,
-            lengthLabel, sliderStyle, store,
+            store,
             isStickerManagerOpen, openStickerManager, goBackFolder, goToRoot,
             currentFolderList, currentFolderName, folderStack,
             isMultiSelect, startMultiSelect, cancelMultiSelect, selectedItems, handleItemClick,

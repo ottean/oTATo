@@ -1,13 +1,19 @@
 .phone-case {
-    width: 360px; /* 稍微窄一点点，配合高度 */
-    height: 720px; /* 缩短高度，更适合电脑屏幕浏览 */
-    background-color: #1a1a1a;
-    border-radius: 40px;
-    padding: 10px;
-    box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+    width: 360px; 
+    height: 720px; 
+    
+    /* [修改] 哑光炭黑：纯色，无渐变，无金属感 */
+    background-color: #222222;
+    
+    /* 保持你觉得合适的极窄边框 */
+    padding: 6px; 
+    border-radius: 46px;
+    
+    /* 唯一的装饰：一个干净的底部投影，让它别贴在纸面上 */
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.3);
+    
     position: relative;
-    /* 恢复 Duang Duang 的弹性动画 */
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .phone-case.fullscreen {
@@ -15,19 +21,25 @@
     height: 100vh;
     border-radius: 0;
     padding: 0;
+    background: #000;
     box-shadow: none;
+    border: none;
 }
 
 .phone-screen {
     width: 100%;
     height: 100%;
     background-color: var(--screen-bg);
-    border-radius: 30px;
+    border-radius: 40px;
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
     transition: all 0.5s ease;
+    
+    /* 去掉所有多余的描边，屏幕直接嵌入外壳 */
+    border: none;
+    box-shadow: none;
 }
 
 .phone-case.fullscreen .phone-screen {
@@ -36,17 +48,21 @@
 
 /* 状态栏 */
 .status-bar {
-    height: 40px;
-    flex-shrink: 0;
+    height: 44px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px 0 20px;
-    font-size: 12px;
+    padding: 0 24px;
+    font-size: 13px;
     font-weight: 600;
     color: #333;
-    z-index: 100;
-    transition: opacity 0.3s ease, visibility 0.3s;
+    z-index: 999; 
+    background: transparent !important; 
+    pointer-events: none; 
 }
 
 .status-bar.hidden {

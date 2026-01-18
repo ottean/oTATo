@@ -11,121 +11,7 @@ export default {
             
             <div class="settings-content">
                 
-                <!-- 1. 外观设置 -->
-                <div class="section-card">
-                    <div class="section-header">显示与外观</div>
-                    
-                    <div class="switch-row">
-                        <span>沉浸全屏模式</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.isFullscreen">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="switch-row">
-                        <span>显示状态栏</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.showStatusBar">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="switch-row">
-                        <span>桌面时钟组件</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.showDesktopTime">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="switch-row">
-                        <span>桌面灵动卡片</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.showDesktopCard">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <!-- 全局字体设置 -->
-                    <div class="form-group" style="margin-top: 15px;">
-                        <!-- [修改] 更新标签文本，明确显示支持 WOFF2 -->
-                        <label class="mini-label">全局字体 (TTF/WOFF/WOFF2)</label>
-                        
-                        <!-- 切换 Tab -->
-                        <div class="segment-control" style="margin-bottom: 10px;">
-                            <div class="segment-item" :class="{ active: fontMode === 'file' }" @click="fontMode = 'file'">本地上传</div>
-                            <div class="segment-item" :class="{ active: fontMode === 'url' }" @click="fontMode = 'url'">网络链接</div>
-                        </div>
-
-                        <!-- 模式 A: 本地文件 -->
-                        <div v-if="fontMode === 'file'" style="display:flex; gap:10px;">
-                            <button class="api-save-btn" @click="triggerFontUpload" style="margin:0; font-size:13px; padding:10px;">
-                                <i class="ri-folder-upload-line"></i> 选择文件
-                            </button>
-                            <button v-if="localSettings.customFontData" class="danger-btn" @click="clearFont" style="margin:0; width:auto; padding:10px 15px;">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
-                        </div>
-
-                        <!-- 模式 B: 网络链接 -->
-                        <div v-if="fontMode === 'url'" style="display:flex; gap:10px;">
-                            <input type="text" v-model="fontUrl" class="glass-input-sm" placeholder="https://example.com/font.woff2" style="flex:1; text-align:left;">
-                            <button class="api-save-btn" @click="applyFontUrl" style="margin:0; width:auto; padding:10px; font-size:13px;">
-                                <i class="ri-check-line"></i> 应用
-                            </button>
-                             <button v-if="localSettings.customFontData" class="danger-btn" @click="clearFont" style="margin:0; width:auto; padding:10px 15px;">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
-                        </div>
-                        
-                        <div v-if="localSettings.customFontData" style="font-size:11px; color:#4cd964; margin-top:5px;">
-                            <i class="ri-checkbox-circle-fill"></i> 当前已应用自定义字体
-                        </div>
-
-                        <input type="file" ref="fontInput" accept=".ttf,.woff,.woff2" style="display:none" @change="handleFontChange">
-                    </div>
-
-                    <!-- 桌面壁纸 -->
-                    <div class="wallpaper-section">
-                        <label class="mini-label">桌面壁纸</label>
-                        
-                        <div class="bg-uploader wallpaper-uploader" 
-                             @click="triggerWallpaper" 
-                             :style="{ backgroundImage: localSettings.desktopWallpaper ? 'url(' + localSettings.desktopWallpaper + ')' : 'none' }"
-                        >
-                            <div class="bg-placeholder" v-if="!localSettings.desktopWallpaper">
-                                <i class="ri-image-2-line"></i>
-                                <span>点击设定桌面壁纸</span>
-                            </div>
-                            <div v-else class="edit-badge wallpaper-edit-badge">
-                                <i class="ri-edit-line"></i>
-                            </div>
-                        </div>
-                        <input type="file" ref="wallpaperInput" accept="image/*" style="display:none" @change="handleWallpaperChange">
-                        
-                        <button v-if="localSettings.desktopWallpaper" 
-                            class="danger-btn wallpaper-remove-btn" 
-                            @click="localSettings.desktopWallpaper = ''">
-                            <i class="ri-delete-bin-line"></i> 移除壁纸恢复默认
-                        </button>
-                    </div>
-
-                     <div class="switch-row css-switch-row">
-                        <span>启用全局 CSS</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="localSettings.enableCustomCss">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div v-if="localSettings.enableCustomCss" class="css-editor-area">
-                        <label class="mini-label">全局样式代码</label>
-                        <textarea v-model="localSettings.globalCss" class="glass-textarea code-font" placeholder="/* body { ... } */"></textarea>
-                    </div>
-                </div>
-
-                <!-- 2. 数据管理 -->
+                <!-- 1. 数据管理 -->
                 <div class="section-card">
                     <div class="section-header">数据备份与恢复</div>
                     <div class="backup-desc">
@@ -148,22 +34,23 @@ export default {
                     </button>
                 </div>
 
+                <!-- 2. 关于 -->
+                <div class="section-card">
+                    <div class="section-header">关于系统</div>
+                    <div style="font-size: 13px; color: #666; line-height: 1.6; text-align: center;">
+                        <p style="font-weight: 600;">v1.0.5 (Build 33)</p>
+                    </div>
+                </div>
+
                 <div class="app-version">
-                    TaTaOs v1.0.4 (Build 32)
+                    Powered by Zoelle
                 </div>
 
             </div>
         </div>
     `,
     setup(props) {
-        const localSettings = props.settings;
         const fileInput = ref(null);
-        const wallpaperInput = ref(null);
-        
-        // 字体相关
-        const fontInput = ref(null);
-        const fontMode = ref('file'); 
-        const fontUrl = ref('');
 
         const handleExport = () => {
             const data = {
@@ -174,7 +61,8 @@ export default {
                 profiles: localStorage.getItem('ai_phone_profiles'),
                 cards: localStorage.getItem('ai_phone_cards'), 
                 globalSettings: localStorage.getItem('ai_phone_global_settings'),
-                activeId: localStorage.getItem('ai_phone_active_id')
+                activeId: localStorage.getItem('ai_phone_active_id'),
+                stickers: localStorage.getItem('ai_phone_stickers') 
             };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -205,6 +93,7 @@ export default {
                         if (json.cards) localStorage.setItem('ai_phone_cards', json.cards);
                         if (json.globalSettings) localStorage.setItem('ai_phone_global_settings', json.globalSettings);
                         if (json.activeId) localStorage.setItem('ai_phone_active_id', json.activeId);
+                        if (json.stickers) localStorage.setItem('ai_phone_stickers', json.stickers);
                         alert("✅ 数据恢复成功！页面即将刷新...");
                         location.reload();
                     }
@@ -224,56 +113,8 @@ export default {
             }
         };
 
-        const triggerWallpaper = () => { wallpaperInput.value.click(); };
-        const handleWallpaperChange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                localSettings.desktopWallpaper = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-            e.target.value = ''; 
-        };
-
-        const triggerFontUpload = () => { fontInput.value.click(); };
-        const handleFontChange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!/\.(ttf|woff|woff2)$/i.test(file.name)) {
-                alert('仅支持 .ttf, .woff, .woff2 格式的字体文件');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                try {
-                    localSettings.customFontData = evt.target.result;
-                    alert('字体已加载，请观察界面变化');
-                } catch(err) {
-                    alert('字体文件过大，可能导致存储失败');
-                }
-            };
-            reader.readAsDataURL(file);
-            e.target.value = '';
-        };
-
-        const applyFontUrl = () => {
-            if (!fontUrl.value.trim()) return;
-            localSettings.customFontData = fontUrl.value.trim();
-            alert('网络字体已应用');
-        };
-
-        const clearFont = () => {
-            localSettings.customFontData = '';
-            fontUrl.value = '';
-        };
-
         return { 
-            localSettings, 
-            handleExport, triggerImport, handleImport, fileInput, handleReset,
-            wallpaperInput, triggerWallpaper, handleWallpaperChange,
-            fontInput, triggerFontUpload, handleFontChange,
-            fontMode, fontUrl, applyFontUrl, clearFont
+            handleExport, triggerImport, handleImport, fileInput, handleReset
         };
     }
 };

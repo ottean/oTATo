@@ -3,6 +3,7 @@ import StatusBar from './components/StatusBar.js';
 import Desktop from './components/Desktop.js';
 import ChatApp from './components/ChatApp.js';
 import SettingsApp from './components/SettingsApp.js';
+import ThemeApp from './components/ThemeApp.js'; // [新增]
 import ApiApp from './components/ApiApp.js';
 import WorldbookApp from './components/WorldbookApp.js';
 import { store } from './store.js'; 
@@ -22,12 +23,12 @@ const PlaceholderApp = {
 };
 
 const App = {
-    components: { StatusBar, Desktop, ChatApp, SettingsApp, ApiApp, WorldbookApp, PlaceholderApp },
+    components: { StatusBar, Desktop, ChatApp, SettingsApp, ThemeApp, ApiApp, WorldbookApp, PlaceholderApp },
     template: `
         <div v-html="globalStyleTag"></div>
 
         <div class="phone-case" :class="{ 'fullscreen': globalSettings.isFullscreen }">
-            <div class="phone-screen">
+            <div class="phone-screen" :class="{ 'app-open': currentApp !== null }">
                 <status-bar 
                     class="status-bar" 
                     :class="{ 'hidden': !globalSettings.showStatusBar }"
@@ -39,6 +40,7 @@ const App = {
                     
                     <chat-app v-else-if="currentApp === 'chat'" @close="goHome"></chat-app>
                     <settings-app v-else-if="currentApp === 'settings'" :settings="globalSettings" @close="goHome"></settings-app>
+                    <theme-app v-else-if="currentApp === 'theme'" :settings="globalSettings" @close="goHome"></theme-app>
                     <api-app v-else-if="currentApp === 'api'" @close="goHome"></api-app>
                     <worldbook-app v-else-if="currentApp === 'worldbook'" @close="goHome"></worldbook-app>
                     <placeholder-app v-else :title="currentApp" @close="goHome"></placeholder-app>
@@ -75,7 +77,6 @@ const App = {
             showDesktopTime: savedSettings.showDesktopTime !== false,
             showDesktopCard: savedSettings.showDesktopCard !== false,
             desktopWallpaper: savedSettings.desktopWallpaper || '',
-            // 默认字体大小 13px
             chatFontSize: savedSettings.chatFontSize || 13,
             customFontData: savedSettings.customFontData || ''
         });
@@ -89,7 +90,7 @@ const App = {
             ([bg, size, fontData]) => {
                 const root = document.documentElement;
                 
-                // 1. 壁纸
+                // 1. 壁纸 (Desktop 内部使用)
                 if (bg) {
                     root.style.setProperty('--desktop-bg', `url(${bg})`);
                 } else {

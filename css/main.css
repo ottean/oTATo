@@ -8,37 +8,100 @@
     --text-sub: #666;
     --primary-color: #333;
 }
-*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
-/* [修改] 全局字体调整为 13px */
+/* [新增] 移动端点击高亮去除 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
 body{background-color:var(--bg-color);display:flex;justify-content:center;align-items:center;height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text-main);font-size:13px;}
 .glass-panel{background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);}
-@keyframes fadeIn{from{opacity:0;transform:scale(0.98);}to{opacity:1;transform:scale(1);}}
 
-.phone-screen {
-    background-color: var(--screen-bg);
+.desktop {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
     background-image: var(--desktop-bg, none);
     background-size: cover;
     background-position: center;
-    position: relative;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    
+    /* [修改] 关键布局调整 */
+    margin-top: 0; /* 让背景图延伸到状态栏底部 */
+    padding-top: 50px; /* 增大顶部留白 (100 - 40 = 60px 视觉间距)，完美避开状态栏 */
 }
 
-/* --- Desktop & Widgets --- */
-.desktop{flex:1;display:flex;flex-direction:column;padding:20px;animation:fadeIn 0.3s ease;overflow-y:auto;}
-.widget-area{margin-bottom:20px;}
+/* [修改] Hero Widget 样式重构 */
+.hero-widget {
+    height: 200px;
+    width: 100%;
+    border-radius: 24px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    overflow: hidden;
+    margin-bottom: 20px;
+    
+    /* 核心布局属性 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; 
+    align-items: flex-start;
+}
+
+.hero-content {
+    position: static; 
+    width: auto;
+    max-width: 100%;
+    padding: 20px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.hero-title {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.hero-sub {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.widget-area{margin-bottom:10px;}
 .date-widget{padding:20px;border-radius:20px;text-align:left;}
 .app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px 5px;margin-bottom:10px;}
 .app-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.1s;}
 .app-item:active{transform:scale(0.95);}
 .app-icon{width:56px;height:56px;border-radius:16px;display:flex;justify-content:center;align-items:center;font-size:26px;margin-bottom:8px;box-shadow:0 4px 10px rgba(0,0,0,0.05);}
 .app-icon.placeholder{background:#f0f0f0;color:#aaa;}
-.app-item span{font-size:12px;color:#555;text-align:center;}
+.app-item span{font-size:12px;color:#555;text-align:center;text-shadow: 0 1px 2px rgba(255,255,255,0.8);}
 .dock{margin-top:auto;height:70px;border-radius:20px;display:flex;justify-content:space-around;align-items:center;margin-bottom:5px;flex-shrink:0;}
-.dock-icon{font-size:24px;color:#444;padding:10px;border-radius:12px;}
+
+.dock-icon {
+    font-size: 24px;
+    color: #444;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.dock-icon:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+.dock-icon:active {
+    transform: scale(0.9);
+    background-color: rgba(0,0,0,0.1);
+}
 
 /* --- Desktop Poster Widget (海报式卡片) --- */
 .poster-widget {
